@@ -15,6 +15,8 @@ local states = kanban.states
 ---@field done boolean
 ---@field order number
 ---@field builtin boolean
+---@field todo boolean|nil this state's column also holds plain `[ ]` tasks
+---@field column boolean|nil a done state with its own column
 
 ---@class kanban.States
 ---@field list kanban.State[] not-done states first (by order, then name), then done states
@@ -26,9 +28,13 @@ local states = kanban.states
 function states.normalize(defs)
   local list = {}
   local byName = {}
-  local function add(name, done, order, builtin)
+  local function add(name, done, order, builtin, flags)
     if byName[name] == nil then
       local s = { name = name, done = done, order = order, builtin = builtin }
+      if flags then
+        s.todo = flags.todo == true and not done or nil
+        s.column = flags.column == true and done or nil
+      end
       byName[name] = s
       list[#list + 1] = s
     end
@@ -39,7 +45,7 @@ function states.normalize(defs)
     local def = defs[key]
     if type(def) == "table" then
       local name = def.name or key
-      add(name, def.done == true, tonumber(def.order) or 0, false)
+      add(name, def.done == true, tonumber(def.order) or 0, false, def)
     end
   end
   add("x", true, math.huge, true)

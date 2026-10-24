@@ -181,6 +181,9 @@ function render.boardElement(spec, m, errors)
     root[#root + 1] = textEl("div", { class = "sbk-title" }, spec.title)
   end
   local problems = {}
+  for _, e in ipairs(kanban.sb.states.problems or {}) do
+    problems[#problems + 1] = e
+  end
   for _, e in ipairs(errors) do
     problems[#problems + 1] = e
   end

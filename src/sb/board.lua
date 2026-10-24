@@ -37,3 +37,17 @@ function kanban.sb.renderBlock(body)
   end
   return kanban.board(parsed)
 end
+
+---Inserts a `kanban` block for the current page at the cursor, with the
+---default columns written out so they can be edited (`/kanban` and
+---"Kanban: Insert board").
+function kanban.sb.insertBoard()
+  local page = editor.getCurrentPage()
+  local normalized = kanban.states.normalize(kanban.sb.data.stateDefs())
+  local block = kanban.defaults.boardBlock(page, kanban.columns.defaultTitles(normalized))
+  local text, pos = editor.getText(), editor.getCursor()
+  if pos > 0 and string.sub(text, pos, pos) ~= "\n" then
+    block = "\n" .. block
+  end
+  editor.insertAtCursor(block)
+end

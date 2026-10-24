@@ -11,9 +11,10 @@ kanban.config = kanban.config or {}
 local config = kanban.config
 
 ---@class kanban.ColumnSpec
+---@field ref string|nil a column name, resolved against the default columns
 ---@field title string|nil
----@field states string[]
----@field dropState string
+---@field states string[]|nil
+---@field dropState string|nil
 
 ---@class kanban.Spec
 ---@field title string|nil
@@ -53,7 +54,8 @@ end
 
 local function columnSpec(entry, i, errors)
   if type(entry) == "string" then
-    return { states = { entry }, dropState = entry }
+    -- A name: resolved against the default columns in kanban.columns.build.
+    return { ref = entry }
   elseif type(entry) ~= "table" then
     errors[#errors + 1] = "column " .. i .. " must be a state name or a table"
     return nil

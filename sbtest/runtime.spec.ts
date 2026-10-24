@@ -8,7 +8,7 @@ import { join } from "node:path";
 import { expect, test } from "@playwright/test";
 import { bundle, type SpecResults } from "./lib/bundle.ts";
 import { repoRoot } from "./lib/server.ts";
-import { runScript } from "./lib/sb.ts";
+import { eventually, readFile, runScript } from "./lib/sb.ts";
 
 function specFiles(dir: string): string[] {
   const abs = join(repoRoot, dir);
@@ -39,3 +39,15 @@ for (const [group, dir, withApi] of groups) {
     });
   }
 }
+
+// CONFIG (sbtest/space/CONFIG.md) sets the complete list of task states, and
+// Migrate/Runtime.md has a task in a state outside it: SilverBullet's own
+// startup (once the scripts load) must have written it back to [ ], without touching
+// the task whose state is listed.
+test("startup: tasks in states CONFIG doesn't list go back to [ ]", async () => {
+  const text = await eventually("Migrate/Runtime.md rewritten", async () => {
+    const t = await readFile("Migrate/Runtime.md");
+    return t.includes("* [ ] Lost at startup") ? t : undefined;
+  });
+  expect(text).toContain("* [TODO] Stays put");
+});

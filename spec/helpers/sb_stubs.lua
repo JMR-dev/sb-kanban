@@ -11,6 +11,9 @@ sbfake = {}
 function sbfake.reset()
   sbfake.config = {}
   sbfake.codeWidgets = {}
+  sbfake.commands = {}
+  sbfake.slashCommands = {}
+  sbfake.listeners = {}
 end
 sbfake.reset()
 
@@ -60,4 +63,23 @@ codeWidget = {}
 
 function codeWidget.define(def)
   sbfake.codeWidgets[def.language] = def
+end
+
+command = {}
+
+function command.define(def)
+  sbfake.commands[def.name] = def
+end
+
+slashCommand = {}
+
+function slashCommand.define(def)
+  sbfake.slashCommands[def.name] = def
+end
+
+event = {}
+
+function event.listen(listener)
+  sbfake.listeners[listener.name] = sbfake.listeners[listener.name] or {}
+  table.insert(sbfake.listeners[listener.name], listener)
 end
