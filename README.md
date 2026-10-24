@@ -9,13 +9,27 @@ pages with `blockedBy` dependencies.
 
 ## Install
 
-In SilverBullet, run **Library: Install** and paste:
+The library is one page, `dist/Library/JMR-dev/Kanban.md`; it belongs at
+`Library/JMR-dev/Kanban.md` in your space.
 
-```
-https://gitea.jasonmross.dev/JMR-dev/sb-kanban/raw/branch/main/dist/Library/JMR-dev/Kanban.md
-```
+- **Folder space** (SilverBullet Desktop, or a server pointed at a folder):
+  copy the file in, and SilverBullet picks it up within seconds.
 
-Usage is documented on the installed page (`Library/JMR-dev/Kanban`).
+  ```sh
+  mkdir -p "$SPACE/Library/JMR-dev"
+  cp dist/Library/JMR-dev/Kanban.md "$SPACE/Library/JMR-dev/"
+  ```
+
+- **Any space, from the browser:** create the page `Library/JMR-dev/Kanban`
+  and paste the file's contents into it.
+
+To update, replace the page the same way. Usage is documented on the
+installed page.
+
+**Library: Install** (and **Library: Update**) need the page at a publicly
+readable `https://` or `github:` URI: SilverBullet 2.12 reads no `http://`
+URIs and cannot sign in. This repository's Gitea instance requires signing
+in to read files, so that route needs a public mirror first.
 
 ## Development
 
