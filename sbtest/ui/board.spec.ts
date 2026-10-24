@@ -199,3 +199,48 @@ test.describe("extensions", () => {
     expect(await readFile("Ext/Tasks.md")).toBe(before);
   });
 });
+
+test.describe("defaults", () => {
+  test("/kanban inserts a board with the columns written out", async ({ page }) => {
+    // Load the library in this browser first (a fresh client loads scripts,
+    // including the slash command, only after its first full index), then
+    // open a page without a board: a board re-rendering on index updates can
+    // close the completion popup. The page is created beforehand because
+    // typing into a page that doesn't exist yet can lose keystrokes.
+    const fence = "```";
+    await openBoard(page, "Boards/Projects");
+    await writeFile("Scratch/Slash.md", "# Slash board\n\n");
+    await page.goto(`${process.env.SB_URL}/Scratch/Slash`);
+    await expect(page.locator(".cm-content")).toContainText("Slash board", { timeout: 60_000 });
+    await page.locator(".cm-line").last().click();
+    await page.keyboard.press("End");
+    await page.keyboard.type("/kan", { delay: 50 });
+    const option = page.locator(".cm-tooltip-autocomplete li", {
+      hasText: "Insert a kanban board with the default columns",
+    });
+    await option.click();
+    await fileWhere("Scratch/Slash.md", "the board block", (t) =>
+      t.includes(
+        `${fence}kanban\npage: Scratch/Slash\ncolumns:\n  - To do\n  - TODO\n  - DOING\n  - Done\n${fence}`,
+      ),
+    );
+  });
+
+  test("removing a state from CONFIG sends its tasks back to [ ]", async ({ page }) => {
+    const config = await readFile("CONFIG.md");
+    await writeFile(
+      "CONFIG.md",
+      config.replace('  { name = "Retired", order = 10, done = true },\n', ""),
+    );
+    try {
+      // A fresh start of the client loads the scripts, which runs the check.
+      await openBoard(page, "Boards/Projects");
+      const text = await fileWhere("Migrate/Tasks.md", "Old task back to [ ]", (t) =>
+        t.includes("* [ ] Old task"),
+      );
+      expect(text).toContain("* [TODO] Still here");
+    } finally {
+      await writeFile("CONFIG.md", config);
+    }
+  });
+});

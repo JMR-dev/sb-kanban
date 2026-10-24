@@ -41,7 +41,7 @@ describe("kanban.config.normalize", function()
     }
     assert.are.same({}, errors)
     assert.are.same({
-      { states = { " " }, dropState = " " },
+      { ref = " " },
       { title = "In progress", states = { "DOING" }, dropState = "DOING" },
       { title = "Done", states = { "x", "SHIPPED" }, dropState = "x" },
       { states = { "WAIT", "HOLD" }, dropState = "HOLD" },

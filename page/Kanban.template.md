@@ -16,32 +16,29 @@ in its page. Tasks can block other tasks across pages.
 
 # Boards
 Installing this library adds no board by itself: a board appears on any page
-where you put a `kanban` block. For example, on a new page:
-
-    # My board
-
-    * [ ] A task
-    * [x] A finished task
+where you put a `kanban` block. The quickest way is to type `/kanban` on an
+empty line (or run **Kanban: Insert board**), which inserts a board for the
+current page with its columns written out:
 
     ```kanban
     page: My board
-    ```
-
-Put a `kanban` block on any page:
-
-    ```kanban
-    title: Website
-    pagePrefix: Projects/Website/
+    columns:
+      - Backlog
+      - Ready for Development
+      - In Progress
+      - Blocked
+      - Cancelled
+      - Done
     ```
 
 Move the cursor out of the block to see the board (a board right at the top of a page shows as source until you click below it, so give the page a heading first).
 
-* **Drag a card** to another column, or use its **Move to…** menu, to change the task's state (`* [TODO] …` becomes `* [DOING] …`).
+* **Drag a card** to another column, or use its **Move to…** menu, to change the task's state (`* [Backlog] …` becomes `* [In Progress] …`).
 * Click the page name on a card to open the task.
 * Boards update by themselves when tasks change anywhere in the space.
 
 ## Options
-All options are optional; with none, the board shows every task in the space.
+All options are optional; with none, the board shows every task in the space, in the default columns.
 
 | Option | Meaning |
 |---|---|
@@ -49,29 +46,50 @@ All options are optional; with none, the board shows every task in the space.
 | `page` | Only tasks on this page (or any page in a list). |
 | `pagePrefix` | Only tasks on pages starting with this (or any prefix in a list), e.g. `Projects/`. |
 | `tag` | Only tasks with this tag (or any tag in a list). |
-| `includeDone` | `false` hides done tasks and the Done column. Default `true`. |
-| `columns` | Which columns to show, in order (see below). Default: one per task state. |
+| `includeDone` | `false` hides done tasks, and the Cancelled and Done columns. Default `true`. |
+| `columns` | Which columns to show, in order (see below). Default: the default columns. |
 | `rules.blockDone` | `true` refuses moving a card into a done column while it has open blockers. |
 
 Filters combine: `pagePrefix: Projects/` with `tag: urgent` shows urgent tasks under `Projects/`.
 
 ## Columns
-By default there is a **To do** column (`[ ]`), one column per state you defined with [[^Library/Std/APIs/Task State|taskState.define]] (in their `order`), and one **Done** column holding every done state (`[x]` and states defined with `done = true`). Cards dropped on Done become `[x]`.
+The default columns follow the task states (see below): **Backlog** (which also holds plain `[ ]` tasks), **Ready for Development**, **In Progress**, **Blocked**, **Cancelled**, and **Done** (`[x]`, plus any other done state without a column of its own). Cards dropped on Backlog become `[Backlog]`; on Done, `[x]`.
 
-To choose columns yourself, list states, or tables:
+In a board's `columns` list, a name means that default column, so **deleting a name from the list removes that column** from the board. Reorder the names to reorder the columns. For anything else, describe a column as a table:
 
     ```kanban
     page: Projects/Website
     columns:
-      - TODO
-      - state: DOING
-        title: In progress
-      - states: [x, SHIPPED]
-        title: Done
-        dropState: SHIPPED
+      - In Progress
+      - state: Blocked
+        title: Waiting
+      - states: [x, Cancelled]
+        title: Closed
+        dropState: x
     ```
 
-A column with several `states` shows all of them; dropping a card on it writes its `dropState` (default: the first state). Tasks in states that no column takes are counted under the board.
+A name that isn't a default column means a column for that state. A column with several `states` shows all of them; dropping a card on it writes its `dropState` (default: the first state). Tasks in states that no column takes are counted under the board.
+
+# Task states
+The library gives every space these task states (Done, `[x]`, is built into SilverBullet):
+
+| State | `order` | Notes |
+|---|---|---|
+| Backlog | 0 | Its column also holds plain `[ ]` tasks (`todo = true`). |
+| Ready for Development | 1 | |
+| In Progress | 2 | |
+| Blocked | 3 | |
+| Cancelled | 4 | Counts as done (so it unblocks tasks waiting on it), but keeps its own column (`done = true, column = true`). |
+
+To change them, run **Kanban: Customize task states**. It adds the current list to your CONFIG, ready to edit:
+
+    kanban.taskStates {
+      { name = "Backlog", order = 0, todo = true },
+      { name = "Ready for Development", order = 1 },
+      ...
+    }
+
+That list is then the complete set of task states. **Deleting a line removes the state**, and once you run **System: Reload**, tasks still in it go back to `[ ]` (also available as **Kanban: Move tasks in removed states to [ ]**). Add lines for your own states. An empty list (`kanban.taskStates {}`) goes back to the defaults. Run **System: Reload** after editing CONFIG.
 
 # Blockers
 A task names the tasks it waits for in a `blockedBy` attribute, by [anchor](https://silverbullet.md/Markdown/Anchor):

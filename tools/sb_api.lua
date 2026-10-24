@@ -76,6 +76,7 @@ return {
   -- any field (dom.<tag> element builders).
   namespaces = {
     codeWidget = { "define" },
+    command = { "define" },
     config = { "get", "set", "define" },
     dom = true,
     editor = {
@@ -85,9 +86,13 @@ return {
       "getText",
       "replaceRange",
       "filterBox",
+      "insertAtCursor",
+      "getCursor",
     },
-    index = { "tasks", "relations", "objects" },
+    event = { "listen" },
+    index = { "tasks", "relations", "objects", "ensureFullIndex" },
     service = { "define", "discover", "invoke" },
+    slashCommand = { "define" },
     space = { "readPage", "writePage" },
     system = { "invokeFunction" },
     widget = { "new", "html" },

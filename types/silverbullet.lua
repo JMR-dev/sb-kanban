@@ -148,3 +148,26 @@ yaml = {}
 ---@param text string
 ---@return any
 function yaml.parse(text) end
+
+command = {}
+
+---@param def { name: string, run: (fun(...): any), key?: string, hide?: boolean }
+function command.define(def) end
+
+slashCommand = {}
+
+---@param def { name: string, description?: string, run: (fun(...): any) }
+function slashCommand.define(def) end
+
+event = {}
+
+---@param listener { name: string, run: (fun(e: table): any) }
+function event.listen(listener) end
+
+---@param text string
+function editor.insertAtCursor(text) end
+
+---@return integer
+function editor.getCursor() end
+
+function index.ensureFullIndex() end

@@ -16,32 +16,29 @@ in its page. Tasks can block other tasks across pages.
 
 # Boards
 Installing this library adds no board by itself: a board appears on any page
-where you put a `kanban` block. For example, on a new page:
-
-    # My board
-
-    * [ ] A task
-    * [x] A finished task
+where you put a `kanban` block. The quickest way is to type `/kanban` on an
+empty line (or run **Kanban: Insert board**), which inserts a board for the
+current page with its columns written out:
 
     ```kanban
     page: My board
-    ```
-
-Put a `kanban` block on any page:
-
-    ```kanban
-    title: Website
-    pagePrefix: Projects/Website/
+    columns:
+      - Backlog
+      - Ready for Development
+      - In Progress
+      - Blocked
+      - Cancelled
+      - Done
     ```
 
 Move the cursor out of the block to see the board (a board right at the top of a page shows as source until you click below it, so give the page a heading first).
 
-* **Drag a card** to another column, or use its **Move to…** menu, to change the task's state (`* [TODO] …` becomes `* [DOING] …`).
+* **Drag a card** to another column, or use its **Move to…** menu, to change the task's state (`* [Backlog] …` becomes `* [In Progress] …`).
 * Click the page name on a card to open the task.
 * Boards update by themselves when tasks change anywhere in the space.
 
 ## Options
-All options are optional; with none, the board shows every task in the space.
+All options are optional; with none, the board shows every task in the space, in the default columns.
 
 | Option | Meaning |
 |---|---|
@@ -49,29 +46,50 @@ All options are optional; with none, the board shows every task in the space.
 | `page` | Only tasks on this page (or any page in a list). |
 | `pagePrefix` | Only tasks on pages starting with this (or any prefix in a list), e.g. `Projects/`. |
 | `tag` | Only tasks with this tag (or any tag in a list). |
-| `includeDone` | `false` hides done tasks and the Done column. Default `true`. |
-| `columns` | Which columns to show, in order (see below). Default: one per task state. |
+| `includeDone` | `false` hides done tasks, and the Cancelled and Done columns. Default `true`. |
+| `columns` | Which columns to show, in order (see below). Default: the default columns. |
 | `rules.blockDone` | `true` refuses moving a card into a done column while it has open blockers. |
 
 Filters combine: `pagePrefix: Projects/` with `tag: urgent` shows urgent tasks under `Projects/`.
 
 ## Columns
-By default there is a **To do** column (`[ ]`), one column per state you defined with [[^Library/Std/APIs/Task State|taskState.define]] (in their `order`), and one **Done** column holding every done state (`[x]` and states defined with `done = true`). Cards dropped on Done become `[x]`.
+The default columns follow the task states (see below): **Backlog** (which also holds plain `[ ]` tasks), **Ready for Development**, **In Progress**, **Blocked**, **Cancelled**, and **Done** (`[x]`, plus any other done state without a column of its own). Cards dropped on Backlog become `[Backlog]`; on Done, `[x]`.
 
-To choose columns yourself, list states, or tables:
+In a board's `columns` list, a name means that default column, so **deleting a name from the list removes that column** from the board. Reorder the names to reorder the columns. For anything else, describe a column as a table:
 
     ```kanban
     page: Projects/Website
     columns:
-      - TODO
-      - state: DOING
-        title: In progress
-      - states: [x, SHIPPED]
-        title: Done
-        dropState: SHIPPED
+      - In Progress
+      - state: Blocked
+        title: Waiting
+      - states: [x, Cancelled]
+        title: Closed
+        dropState: x
     ```
 
-A column with several `states` shows all of them; dropping a card on it writes its `dropState` (default: the first state). Tasks in states that no column takes are counted under the board.
+A name that isn't a default column means a column for that state. A column with several `states` shows all of them; dropping a card on it writes its `dropState` (default: the first state). Tasks in states that no column takes are counted under the board.
+
+# Task states
+The library gives every space these task states (Done, `[x]`, is built into SilverBullet):
+
+| State | `order` | Notes |
+|---|---|---|
+| Backlog | 0 | Its column also holds plain `[ ]` tasks (`todo = true`). |
+| Ready for Development | 1 | |
+| In Progress | 2 | |
+| Blocked | 3 | |
+| Cancelled | 4 | Counts as done (so it unblocks tasks waiting on it), but keeps its own column (`done = true, column = true`). |
+
+To change them, run **Kanban: Customize task states**. It adds the current list to your CONFIG, ready to edit:
+
+    kanban.taskStates {
+      { name = "Backlog", order = 0, todo = true },
+      { name = "Ready for Development", order = 1 },
+      ...
+    }
+
+That list is then the complete set of task states. **Deleting a line removes the state**, and once you run **System: Reload**, tasks still in it go back to `[ ]` (also available as **Kanban: Move tasks in removed states to [ ]**). Add lines for your own states. An empty list (`kanban.taskStates {}`) goes back to the defaults. Run **System: Reload** after editing CONFIG.
 
 # Blockers
 A task names the tasks it waits for in a `blockedBy` attribute, by [anchor](https://silverbullet.md/Markdown/Anchor):
@@ -254,9 +272,16 @@ builtins.blockDone = {
 -- SPDX-License-Identifier: AGPL-3.0-or-later
 -- priority: 50
 
--- A board's columns: given explicitly in the board options, or derived from
--- the task states (to do, each custom not-done state, then one Done column
--- that collects every done state and receives drops as "x").
+-- A board's columns. By default they come from the task states: one column
+-- per state in `order`, then one Done column that collects every done state
+-- and receives drops as "x". Two state flags adjust that: `todo` makes a
+-- state's column also hold plain `[ ]` tasks (instead of a separate To do
+-- column), and `column` gives a done state its own column before Done.
+--
+-- A board's `columns` option lists the columns to show. A plain name refers
+-- to a default column (by title, else by one of its states), so the
+-- pre-filled list is just names and deleting one removes that column; a
+-- table describes a column literally.
 
 kanban = kanban or {}
 kanban.columns = kanban.columns or {}
@@ -273,6 +298,76 @@ local defaultTitles = { [" "] = "To do", x = "Done", X = "Done" }
 
 local function titleFor(states)
   return defaultTitles[states[1]] or states[1]
+end
+
+---The default columns for a set of task states (without ids).
+---@param normalized kanban.States
+---@return { title: string, states: string[], dropState: string }[]
+function columns.defaults(normalized)
+  local todoState = nil
+  for _, s in ipairs(normalized.list) do
+    if s.todo and not s.done and todoState == nil then
+      todoState = s.name
+    end
+  end
+  local out = {}
+  if todoState == nil then
+    out[#out + 1] = { title = "To do", states = { " " }, dropState = " " }
+  end
+  local doneStates = {}
+  for _, s in ipairs(normalized.list) do
+    if s.builtin then
+      if s.done then
+        doneStates[#doneStates + 1] = s.name
+      end
+    elseif s.done and not s.column then
+      doneStates[#doneStates + 1] = s.name
+    else
+      local states = { s.name }
+      if s.name == todoState then
+        states[2] = " "
+      end
+      out[#out + 1] = { title = s.name, states = states, dropState = s.name }
+    end
+  end
+  -- "x" first so that drops into Done write "x". The comparator must be a
+  -- strict ordering (cmp(a, a) == false): Space Lua's sort never returns
+  -- otherwise.
+  table.sort(doneStates, function(a, b)
+    if a == b then
+      return false
+    elseif a == "x" or b == "x" then
+      return a == "x"
+    end
+    return a < b
+  end)
+  out[#out + 1] = { title = "Done", states = doneStates, dropState = "x" }
+  return out
+end
+
+---The titles of the default columns, as `/kanban` pre-fills them.
+---@param normalized kanban.States
+---@return string[]
+function columns.defaultTitles(normalized)
+  return kanban.util.map(columns.defaults(normalized), function(c)
+    return c.title
+  end)
+end
+
+-- A default column by title, else the default column holding that state,
+-- else a column for that single state.
+local function resolve(ref, defaultsList)
+  for _, c in ipairs(defaultsList) do
+    if c.title == ref then
+      return c
+    end
+  end
+  for _, c in ipairs(defaultsList) do
+    if kanban.util.contains(c.states, ref) then
+      return c
+    end
+  end
+  return { title = titleFor { ref }, states = { ref }, dropState = ref }
 end
 
 ---@param spec kanban.Spec
@@ -299,33 +394,21 @@ function columns.build(spec, normalized)
     }
   end
 
-  if spec.columns then
-    for _, c in ipairs(spec.columns) do
-      add(c.title or titleFor(c.states), c.states, c.dropState)
+  local defaultsList = columns.defaults(normalized)
+  if spec.columns == nil then
+    for _, c in ipairs(defaultsList) do
+      add(c.title, c.states, c.dropState)
     end
     return out
   end
-
-  local doneStates = {}
-  for _, s in ipairs(normalized.list) do
-    if s.done then
-      doneStates[#doneStates + 1] = s.name
+  for _, c in ipairs(spec.columns) do
+    if c.ref ~= nil then
+      local d = resolve(c.ref, defaultsList)
+      add(d.title, d.states, d.dropState)
     else
-      add(titleFor { s.name }, { s.name }, s.name)
+      add(c.title or titleFor(c.states), c.states, c.dropState)
     end
   end
-  -- "x" first so that drops into Done write "x". The comparator must be a
-  -- strict ordering (cmp(a, a) == false): Space Lua's sort never returns
-  -- otherwise.
-  table.sort(doneStates, function(a, b)
-    if a == b then
-      return false
-    elseif a == "x" or b == "x" then
-      return a == "x"
-    end
-    return a < b
-  end)
-  add("Done", doneStates, "x")
   return out
 end
 
@@ -358,9 +441,10 @@ kanban.config = kanban.config or {}
 local config = kanban.config
 
 ---@class kanban.ColumnSpec
+---@field ref string|nil a column name, resolved against the default columns
 ---@field title string|nil
----@field states string[]
----@field dropState string
+---@field states string[]|nil
+---@field dropState string|nil
 
 ---@class kanban.Spec
 ---@field title string|nil
@@ -400,7 +484,8 @@ end
 
 local function columnSpec(entry, i, errors)
   if type(entry) == "string" then
-    return { states = { entry }, dropState = entry }
+    -- A name: resolved against the default columns in kanban.columns.build.
+    return { ref = entry }
   elseif type(entry) ~= "table" then
     errors[#errors + 1] = "column " .. i .. " must be a state name or a table"
     return nil
@@ -515,6 +600,210 @@ function config.normalize(raw)
     end
   end
   return spec, errors
+end
+```
+
+### src/core/defaults.lua
+```space-lua
+-- SPDX-License-Identifier: AGPL-3.0-or-later
+-- priority: 50
+
+-- The library's built-in defaults: the task states every space gets, and the
+-- pre-filled text that `/kanban` and "Kanban: Customize task states" insert,
+-- so people edit a full list (deleting a line removes that column or state)
+-- instead of starting from nothing.
+
+kanban = kanban or {}
+kanban.defaults = kanban.defaults or {}
+local defaults = kanban.defaults
+
+---@class kanban.StateSpec
+---@field name string
+---@field order number|nil
+---@field done boolean|nil a finished state (counts as done for blockers)
+---@field todo boolean|nil kanban: this state's column also holds plain `[ ]` tasks
+---@field column boolean|nil kanban: a done state that keeps its own column
+
+---The task states every space gets with this library. Done (`[x]`) is built
+---into SilverBullet and always comes last.
+---@type kanban.StateSpec[]
+defaults.taskStates = {
+  { name = "Backlog", order = 0, todo = true },
+  { name = "Ready for Development", order = 1 },
+  { name = "In Progress", order = 2 },
+  { name = "Blocked", order = 3 },
+  { name = "Cancelled", order = 4, done = true, column = true },
+}
+
+---Validates a task-state list (as given to kanban.taskStates). Returns the
+---valid entries and the problems found in the others.
+---@param list any
+---@return kanban.StateSpec[] valid
+---@return string[] problems
+function defaults.validateStates(list)
+  local valid, problems, seen = {}, {}, {}
+  if type(list) ~= "table" then
+    return valid, { "kanban.taskStates needs a list of states" }
+  end
+  local todo = nil
+  for i, s in ipairs(list) do
+    local where = "task state " .. i
+    if type(s) ~= "table" or type(s.name) ~= "string" or s.name == "" then
+      problems[#problems + 1] = where .. " needs a `name`"
+    elseif s.name == " " or s.name == "x" or s.name == "X" then
+      problems[#problems + 1] = where .. ": `" .. s.name .. "` is built in"
+    elseif string.find(s.name, ":", 1, true) or string.find(s.name, "]", 1, true) then
+      problems[#problems + 1] = where .. ": names cannot contain `:` or `]`"
+    elseif seen[s.name] then
+      problems[#problems + 1] = where .. ": `" .. s.name .. "` is listed twice"
+    elseif s.order ~= nil and type(s.order) ~= "number" then
+      problems[#problems + 1] = where .. ": `order` must be a number"
+    elseif s.todo and s.done then
+      problems[#problems + 1] = where .. ": a done state cannot hold `[ ]` tasks"
+    elseif s.todo and todo then
+      problems[#problems + 1] = where
+        .. ": only one state can hold `[ ]` tasks ("
+        .. todo
+        .. " already does)"
+    else
+      seen[s.name] = true
+      if s.todo then
+        todo = s.name
+      end
+      valid[#valid + 1] = {
+        name = s.name,
+        order = s.order,
+        done = s.done == true or nil,
+        todo = s.todo == true or nil,
+        column = s.column == true or nil,
+      }
+    end
+  end
+  return valid, problems
+end
+
+---The `taskStates` config map for a list of states.
+---@param list kanban.StateSpec[]
+---@return table<string, kanban.StateSpec>
+function defaults.stateMap(list)
+  local map = {}
+  for _, s in ipairs(list) do
+    map[s.name] = kanban.util.shallowCopy(s)
+  end
+  return map
+end
+
+---The states of a `taskStates` config map as a list, ordered like their
+---columns (to do, then by `order`, done states last).
+---@param map table<string, table>|nil
+---@return kanban.StateSpec[]
+function defaults.stateList(map)
+  local normalized = kanban.states.normalize(map)
+  local out = {}
+  for _, s in ipairs(normalized.list) do
+    if not s.builtin then
+      local spec = { name = s.name, order = s.order }
+      if s.done then
+        spec.done = true
+      end
+      if s.todo then
+        spec.todo = true
+      end
+      if s.column then
+        spec.column = true
+      end
+      out[#out + 1] = spec
+    end
+  end
+  return out
+end
+
+-- A Markdown code fence. Spelled out with string.rep because three backticks
+-- in a source file would end the library page's own space-lua fence.
+local fence = string.rep("`", 3)
+
+-- YAML for a plain string: bare when unambiguous, double-quoted otherwise.
+local function yamlString(s)
+  if string.match(s, "^[%w][%w _/%.%-]*$") and not string.match(s, "%s$") then
+    return s
+  end
+  local escaped = string.gsub(s, '[\\"]', "\\%0")
+  return '"' .. escaped .. '"'
+end
+
+---The text of a `kanban` block for a page, with its columns written out so
+---they can be edited (deleting a line removes that column).
+---@param pageName string
+---@param columnTitles string[]
+---@return string
+function defaults.boardBlock(pageName, columnTitles)
+  local lines = { fence .. "kanban", "page: " .. yamlString(pageName), "columns:" }
+  for _, title in ipairs(columnTitles) do
+    lines[#lines + 1] = "  - " .. yamlString(title)
+  end
+  lines[#lines + 1] = fence
+  return table.concat(lines, "\n") .. "\n"
+end
+
+---The Space Lua for a CONFIG block that sets the complete list of task
+---states, pre-filled with `list`.
+---@param list kanban.StateSpec[]
+---@return string
+function defaults.configBlock(list)
+  local lines = {
+    "-- Kanban task states: the complete list. Delete a line to remove a state",
+    "-- (its tasks go back to [ ] after System: Reload); add lines for your",
+    "-- own. `todo = true` also puts plain [ ] tasks in that column, and",
+    "-- `column = true` gives a done state its own column. Done ([x]) is built in.",
+    "kanban.taskStates {",
+  }
+  for _, s in ipairs(list) do
+    local parts = { "name = " .. string.format("%q", s.name) }
+    if s.order ~= nil then
+      parts[#parts + 1] = "order = " .. tostring(s.order)
+    end
+    if s.done then
+      parts[#parts + 1] = "done = true"
+    end
+    if s.todo then
+      parts[#parts + 1] = "todo = true"
+    end
+    if s.column then
+      parts[#parts + 1] = "column = true"
+    end
+    lines[#lines + 1] = "  { " .. table.concat(parts, ", ") .. " },"
+  end
+  lines[#lines + 1] = "}"
+  return table.concat(lines, "\n") .. "\n"
+end
+
+---Inserts a Space Lua snippet into CONFIG text: at the end of the first
+---space-lua block that the Configuration Manager doesn't manage, or in a new
+---block at the end when there is none.
+---@param configText string
+---@param snippet string
+---@return string
+function defaults.insertIntoConfig(configText, snippet)
+  local open = fence .. "space-lua"
+  local pos = 1
+  while true do
+    local s, e = string.find(configText, open, pos, true)
+    if s == nil then
+      break
+    end
+    local close = string.find(configText, "\n" .. fence, e, true)
+    if close == nil then
+      break
+    end
+    local body = string.sub(configText, e + 1, close)
+    if not string.find(body, "managed-by: configuration-manager", 1, true) then
+      local before = string.sub(configText, 1, close)
+      return before .. snippet .. string.sub(configText, close + 1)
+    end
+    pos = close + 1
+  end
+  local sep = string.sub(configText, -1) == "\n" and "\n" or "\n\n"
+  return configText .. sep .. open .. "\n" .. snippet .. fence .. "\n"
 end
 ```
 
@@ -1252,6 +1541,8 @@ local states = kanban.states
 ---@field done boolean
 ---@field order number
 ---@field builtin boolean
+---@field todo boolean|nil this state's column also holds plain `[ ]` tasks
+---@field column boolean|nil a done state with its own column
 
 ---@class kanban.States
 ---@field list kanban.State[] not-done states first (by order, then name), then done states
@@ -1263,9 +1554,13 @@ local states = kanban.states
 function states.normalize(defs)
   local list = {}
   local byName = {}
-  local function add(name, done, order, builtin)
+  local function add(name, done, order, builtin, flags)
     if byName[name] == nil then
       local s = { name = name, done = done, order = order, builtin = builtin }
+      if flags then
+        s.todo = flags.todo == true and not done or nil
+        s.column = flags.column == true and done or nil
+      end
       byName[name] = s
       list[#list + 1] = s
     end
@@ -1276,7 +1571,7 @@ function states.normalize(defs)
     local def = defs[key]
     if type(def) == "table" then
       local name = def.name or key
-      add(name, def.done == true, tonumber(def.order) or 0, false)
+      add(name, def.done == true, tonumber(def.order) or 0, false, def)
     end
   end
   add("x", true, math.huge, true)
@@ -1797,6 +2092,20 @@ function kanban.sb.renderBlock(body)
   end
   return kanban.board(parsed)
 end
+
+---Inserts a `kanban` block for the current page at the cursor, with the
+---default columns written out so they can be edited (`/kanban` and
+---"Kanban: Insert board").
+function kanban.sb.insertBoard()
+  local page = editor.getCurrentPage()
+  local normalized = kanban.states.normalize(kanban.sb.data.stateDefs())
+  local block = kanban.defaults.boardBlock(page, kanban.columns.defaultTitles(normalized))
+  local text, pos = editor.getText(), editor.getCursor()
+  if pos > 0 and string.sub(text, pos, pos) ~= "\n" then
+    block = "\n" .. block
+  end
+  editor.insertAtCursor(block)
+end
 ```
 
 ### src/sb/bridge.lua
@@ -1937,6 +2246,101 @@ function data.model(spec)
     kanban.model.build(s, data.allTasks(), data.stateDefs(), kanban.registry.list "decorators")
   kanban.sb.bridge.decorate(m)
   return m
+end
+```
+
+### src/sb/migrate.lua
+```space-lua
+-- SPDX-License-Identifier: AGPL-3.0-or-later
+-- priority: 50
+
+-- When CONFIG sets the complete list of task states (kanban.taskStates), a
+-- task in any other state goes back to `[ ]`. This runs once after the
+-- scripts load, at startup and after System: Reload (scheduled in
+-- src/register.lua), and from the "Kanban: Move tasks in removed states to
+-- [ ]" command.
+--
+-- Tasks are rewritten bottom-up within each page, so a rewrite never shifts
+-- the position of a task still to come, and every write goes through the
+-- guarded write path: a task that changed meanwhile is skipped and picked up
+-- next time.
+
+kanban = kanban or {}
+kanban.sb = kanban.sb or {}
+kanban.sb.migrate = kanban.sb.migrate or {}
+local migrate = kanban.sb.migrate
+
+local builtin = { [" "] = true, x = true, X = true }
+
+---The tasks in states that the current list doesn't have, grouped by page and
+---ordered bottom-up within each page.
+---@return kanban.Task[]
+function migrate.strays()
+  local defs = config.get("taskStates", {})
+  local byPage, pages = {}, {}
+  for _, t in ipairs(kanban.sb.data.allTasks()) do
+    if not builtin[t.state] and defs[t.state] == nil then
+      if byPage[t.page] == nil then
+        byPage[t.page] = {}
+        pages[#pages + 1] = t.page
+      end
+      local list = byPage[t.page]
+      list[#list + 1] = t
+    end
+  end
+  table.sort(pages)
+  local out = {}
+  for _, page in ipairs(pages) do
+    local list = byPage[page]
+    table.sort(list, function(a, b)
+      return a.from > b.from
+    end)
+    for _, t in ipairs(list) do
+      out[#out + 1] = t
+    end
+  end
+  return out
+end
+
+---Moves tasks in removed states back to `[ ]` (only when CONFIG sets the
+---complete list of states).
+---@param explicit boolean|nil true when run as a command: also report "nothing to do"
+---@return integer moved
+---@return integer skipped
+function migrate.run(explicit)
+  if not kanban.sb.states.customized() then
+    if explicit then
+      editor.flashNotification(
+        "CONFIG doesn't set a list of task states"
+          .. " (Kanban: Customize task states), so no state was removed."
+      )
+    end
+    return 0, 0
+  end
+  index.ensureFullIndex()
+  local moved, skipped = 0, 0
+  for _, t in ipairs(migrate.strays()) do
+    if kanban.sb.write.setState(t, " ") then
+      moved = moved + 1
+    else
+      skipped = skipped + 1
+    end
+  end
+  if moved > 0 then
+    local noun = moved == 1 and " task" or " tasks"
+    editor.flashNotification("Kanban: moved " .. moved .. noun .. " in removed states back to [ ].")
+  end
+  if skipped > 0 then
+    editor.flashNotification(
+      "Kanban: "
+        .. skipped
+        .. " task(s) in removed states changed meanwhile; they'll be moved next time.",
+      "error"
+    )
+  elseif explicit and moved == 0 then
+    editor.flashNotification "Kanban: no tasks are in removed states."
+  end
+  return moved, skipped
 end
 ```
 
@@ -2125,6 +2529,9 @@ function render.boardElement(spec, m, errors)
     root[#root + 1] = textEl("div", { class = "sbk-title" }, spec.title)
   end
   local problems = {}
+  for _, e in ipairs(kanban.sb.states.problems or {}) do
+    problems[#problems + 1] = e
+  end
   for _, e in ipairs(errors) do
     problems[#problems + 1] = e
   end
@@ -2162,6 +2569,97 @@ function render.board(options)
     return render.problems { "The board could not be drawn: " .. tostring(result) }
   end
   return widget.html(result)
+end
+```
+
+### src/sb/states.lua
+```space-lua
+-- SPDX-License-Identifier: AGPL-3.0-or-later
+-- priority: 50
+
+-- Task states: the library's defaults (applied when it loads), and
+-- `kanban.taskStates { ... }` for CONFIG, which sets the complete list.
+
+kanban = kanban or {}
+kanban.sb = kanban.sb or {}
+kanban.sb.states = kanban.sb.states or {}
+local states = kanban.sb.states
+
+-- Problems with the last kanban.taskStates list, shown above every board.
+states.problems = states.problems or {}
+
+---Adds the library's default task states, leaving any state that is already
+---defined alone. Runs when the library loads (src/register.lua), before
+---CONFIG, so CONFIG can change or replace them.
+function states.applyDefaults()
+  for _, s in ipairs(kanban.defaults.taskStates) do
+    if config.get({ "taskStates", s.name }, nil) == nil then
+      config.set({ "taskStates", s.name }, kanban.util.shallowCopy(s))
+    end
+  end
+end
+
+---Whether CONFIG set a complete list of task states.
+---@return boolean
+function states.customized()
+  return config.get({ "kanban", "customStates" }, false) == true
+end
+
+---Sets the complete list of task states (use in CONFIG). Every state not in a
+---non-empty list stops existing, the library's defaults included, and tasks
+---left in such states go back to `[ ]` once the scripts reload. An empty
+---list goes back to the defaults. Each entry is
+---`{ name, order?, done?, todo?, column? }`: `todo = true` also puts plain
+---`[ ]` tasks in that state's column, and `column = true` gives a done state
+---its own column.
+---@param list kanban.StateSpec[]
+function kanban.taskStates(list)
+  local valid, problems = kanban.defaults.validateStates(list)
+  states.problems = kanban.util.map(problems, function(p)
+    return "kanban.taskStates: " .. p
+  end)
+  if #valid == 0 then
+    config.set("taskStates", kanban.defaults.stateMap(kanban.defaults.taskStates))
+    config.set({ "kanban", "customStates" }, false)
+    return
+  end
+  config.set("taskStates", kanban.defaults.stateMap(valid))
+  config.set({ "kanban", "customStates" }, true)
+end
+
+---Writes the current task states into CONFIG as an editable
+---`kanban.taskStates { ... }` list, unless CONFIG already has one.
+---@param pageName string|nil defaults to "CONFIG"
+---@return boolean written
+function states.customize(pageName)
+  pageName = pageName or "CONFIG"
+  local open = editor.getCurrentPage() == pageName
+  local text = ""
+  if open then
+    text = editor.getText()
+  else
+    local ok, existing = pcall(space.readPage, pageName)
+    if ok and existing then
+      text = existing
+    end
+  end
+  if string.find(text, "kanban.taskStates", 1, true) then
+    editor.flashNotification(pageName .. " already lists the task states: edit them there.")
+    if not open then
+      editor.navigate(pageName)
+    end
+    return false
+  end
+  local current = kanban.defaults.stateList(config.get("taskStates", {}))
+  local updated = kanban.defaults.insertIntoConfig(text, kanban.defaults.configBlock(current))
+  if open then
+    editor.replaceRange(0, #text, updated)
+  else
+    space.writePage(pageName, updated)
+    editor.navigate(pageName)
+  end
+  editor.flashNotification "Edit the task states in CONFIG, then run System: Reload."
+  return true
 end
 ```
 
@@ -2309,15 +2807,63 @@ end
 -- SilverBullet runs blocks of equal priority in no guaranteed order (it sorts
 -- them by their `Page@pos` ref as a string), so no other file may call into
 -- another file while loading. This block runs after all of them (priority 10
--- comes after 50). spec/tools/load_order_spec.lua checks the rule.
+-- comes after 50) and before CONFIG (priority 0), which can change the default
+-- task states. spec/tools/load_order_spec.lua checks the rule.
 
 kanban.defineDecorator(kanban.builtins.dependencies)
 kanban.defineMoveGuard(kanban.builtins.blockDone)
+
+kanban.sb.states.applyDefaults()
 
 codeWidget.define {
   language = "kanban",
   render = function(body)
     return kanban.sb.renderBlock(body)
+  end,
+}
+
+slashCommand.define {
+  name = "kanban",
+  description = "Insert a kanban board with the default columns",
+  run = function()
+    kanban.sb.insertBoard()
+  end,
+}
+
+command.define {
+  name = "Kanban: Insert board",
+  run = function()
+    kanban.sb.insertBoard()
+  end,
+}
+
+command.define {
+  name = "Kanban: Customize task states",
+  run = function()
+    kanban.sb.states.customize()
+  end,
+}
+
+command.define {
+  name = "Kanban: Move tasks in removed states to [ ]",
+  run = function()
+    kanban.sb.migrate.run(true)
+  end,
+}
+
+-- Move tasks in removed states back to [ ] once the scripts have loaded:
+-- this block runs on every load (startup and System: Reload), before CONFIG,
+-- and the check runs on the next clock tick, after CONFIG. (editor:init is not
+-- enough: System: Reload doesn't fire it, and on a client's first start the
+-- scripts only load after it.)
+kanban.sb.migrate.pending = true
+event.listen {
+  name = "cron:secondPassed",
+  run = function()
+    if kanban.sb.migrate.pending then
+      kanban.sb.migrate.pending = false
+      kanban.sb.migrate.run()
+    end
   end,
 }
 ```

@@ -45,6 +45,12 @@ describe("library load order", function()
       assert.is_true(env.kanban.registry.decorators["kanban.dependencies"] ~= nil)
       assert.is_true(env.kanban.registry.guards["kanban.blockDone"] ~= nil)
       assert.is_true(sbfake.codeWidgets.kanban ~= nil)
+      assert.is_true(sbfake.slashCommands.kanban ~= nil)
+      assert.is_true(sbfake.commands["Kanban: Customize task states"] ~= nil)
+      assert.are.equal(1, #sbfake.listeners["cron:secondPassed"])
+      assert.is_true(env.kanban.sb.migrate.pending)
+      -- The default task states are in place before CONFIG runs.
+      assert.is_true(sbfake.config.taskStates.Backlog.todo)
     end)
   end
 
