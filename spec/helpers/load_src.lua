@@ -9,6 +9,7 @@
 -- stubs; specs under spec/core/ must not touch them, since they also run
 -- inside real SilverBullet against the installed page.
 
+dofile "spec/helpers/strict_sort.lua"
 dofile "spec/helpers/sb_stubs.lua"
 
 local sources = dofile "tools/page_sources.lua"

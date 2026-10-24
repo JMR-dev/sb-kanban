@@ -19,8 +19,10 @@ release has yet; it is not a source of truth here. The pinned server is.
 | No bitwise operators | 32-bit in Space Lua, 64-bit in Lua 5.5 | `tools/check_dialect.lua` |
 | Long brackets at level 2 at most (`[==[`) | Space Lua's limit | `tools/check_dialect.lua` |
 | No `__gc`, `__mode`, `__metatable` | Unsupported metamethods | `tools/check_dialect.lua` |
+| No `repeat ... until` | Space Lua resolves a body `local` named in the `until` condition as a global (found by the in-SilverBullet run of `deps.lua`'s cycle detection) | `tools/check_dialect.lua` |
 | No `_G` | A userdata proxy in Space Lua: `type(_G)` is `"userdata"` and `pairs(_G)` yields nothing | `tools/check_dialect.lua` |
 | No assignment to `for` loop variables | Compile error in Lua 5.5 | `luac -p` (5.5.1) |
+| `table.sort` comparators must be strict (`cmp(a, a)` is false, never both `cmp(a, b)` and `cmp(b, a)`) | Space Lua's sort never returns otherwise, which hangs the client; Lua 5.5.1 copes | `spec/helpers/strict_sort.lua` fails any such sort in the Lua 5.5.1 run |
 | Don't depend on `pairs` order | Space Lua orders keys differently | Review; the in-SilverBullet spec run catches regressions |
 | Don't compare error messages for equality | Space Lua's `error()` adds no position prefix | Specs use `assert.has_error(fn, substring)` |
 | Don't rely on integer vs float formatting or 64-bit integers | Space Lua numbers are JS doubles | Review; the in-SilverBullet spec run |

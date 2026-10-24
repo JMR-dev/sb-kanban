@@ -15,7 +15,9 @@ export async function runScript<T = unknown>(script: string): Promise<T> {
   const res = await fetch(`${sbUrl()}/.runtime/lua_script`, {
     method: "POST",
     body: script,
-    headers: { "X-Timeout": "120000" },
+    // A spec finishes in well under a second; a long wait means it hung the
+    // client (e.g. Space Lua's table.sort with a non-strict comparator).
+    headers: { "X-Timeout": "30000" },
   });
   const body = (await res.json()) as { result?: T; error?: string };
   if (body.error) throw new LuaError(body.error);
