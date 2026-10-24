@@ -1,0 +1,10 @@
+# Toolchain and dependencies (scripts/bootstrap.sh, pnpm)
+/.tools/
+/lua_modules/
+/.luarocks/
+/node_modules/
+
+# Test output
+/test-results/
+/playwright-report/
+/.sbtest-tmp/

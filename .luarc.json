@@ -1,0 +1,20 @@
+{
+  "$schema": "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json",
+  "runtime.version": "Lua 5.4",
+  "runtime.builtin": {
+    "coroutine": "disable",
+    "debug": "disable",
+    "io": "disable",
+    "package": "disable",
+    "utf8": "disable"
+  },
+  "workspace.library": ["types"],
+  "workspace.ignoreDir": [".tools", "lua_modules", "node_modules", "dist", "tools", "spec", "sbtest", ".sbtest-tmp"],
+  "workspace.checkThirdParty": false,
+  "diagnostics.disable": ["lowercase-global"],
+  "diagnostics.severity": {
+    "undefined-global": "Error",
+    "undefined-field": "Error"
+  },
+  "format.enable": false
+}

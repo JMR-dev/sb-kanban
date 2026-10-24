@@ -1,0 +1,17 @@
+{
+  "name": "sb-kanban",
+  "private": true,
+  "type": "module",
+  "description": "Test harness for the sb-kanban Space Lua library: drives a real SilverBullet server",
+  "packageManager": "pnpm@12.15.0",
+  "engines": {
+    "node": "^26.0.0"
+  },
+  "scripts": {
+    "sb-test": "playwright test --project=runtime",
+    "e2e": "playwright test --project=ui --pass-with-no-tests"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1"
+  }
+}

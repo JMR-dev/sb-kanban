@@ -1,0 +1,14 @@
+# StyLua has no Lua 5.5 parser; the code must stay valid Space Lua (Lua 5.4
+# level) anyway, so parse as 5.4.
+syntax = "Lua54"
+column_width = 100
+line_endings = "Unix"
+indent_type = "Spaces"
+indent_width = 2
+quote_style = "AutoPreferDouble"
+# "None" matches SilverBullet's Std style (`widget.new { ... }`,
+# `editor.flashNotification "..."`) and, unlike the default "Always", never
+# rewrites `query[[...]]` into `query([[...]])`, which Space Lua cannot parse
+# because `query` is a keyword there.
+call_parentheses = "None"
+collapse_simple_statement = "Never"
