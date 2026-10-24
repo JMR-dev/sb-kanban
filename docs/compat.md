@@ -27,6 +27,8 @@ release has yet; it is not a source of truth here. The pinned server is.
 | Don't compare error messages for equality | Space Lua's `error()` adds no position prefix | Specs use `assert.has_error(fn, substring)` |
 | Don't rely on integer vs float formatting or 64-bit integers | Space Lua numbers are JS doubles | Review; the in-SilverBullet spec run |
 | Don't trust `task.done` | Pages indexed before CONFIG ran keep a stale value | `kanban.states` computes done-ness from `taskStates` |
+| No file calls into another file while loading; load-time actions live in `src/register.lua` (priority 10) | SilverBullet runs equal-priority blocks in no guaranteed order (by `Page@pos` ref, compared as strings) | `spec/tools/load_order_spec.lua` loads `src/` forwards and backwards |
+| Task text goes into the DOM through `kanban.sb.render.textEl` | 2.12's `dom` builder renders plain-string children as Markdown, raw HTML included | `sbtest/runtime/render_spec.lua` and the e2e literal-text test |
 | No widget relying on automatic re-render | Edge only; 2.12 needs `refreshOn` | Boards use `widget.new { content = ..., refreshOn = { "index" } }`; e2e checks a board updates after an edit elsewhere |
 
 Code that must follow the rules: `src/`, `spec/core/`, `sbtest/shim.lua`,

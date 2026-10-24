@@ -167,3 +167,91 @@ function model.column(m, id)
   end
   return nil
 end
+
+local function refs(list)
+  return kanban.util.map(list, function(t)
+    return t.ref
+  end)
+end
+
+---A card as plain data (no functions, no shared tables), for extensions that
+---run outside this library, such as a TypeScript plug behind a SilverBullet
+---service.
+---@param card kanban.Card
+---@return table
+function model.cardSnapshot(card)
+  local t, d = card.task, card.deps
+  return {
+    id = card.id,
+    title = card.title,
+    page = card.page,
+    done = card.done,
+    column = card.column,
+    state = t.state,
+    anchor = t.anchor,
+    tags = kanban.util.shallowCopy(t.tags),
+    blockedBy = kanban.util.shallowCopy(t.blockedBy),
+    blockers = refs(d.blockers),
+    blocks = refs(d.blocks),
+    openBlockers = d.openBlockers,
+    missing = kanban.util.shallowCopy(d.missing),
+    inCycle = d.inCycle,
+  }
+end
+
+---A column as plain data, with its cards as a list of card ids.
+---@param column table
+---@return table
+function model.columnSnapshot(column)
+  return {
+    id = column.id,
+    title = column.title,
+    states = kanban.util.shallowCopy(column.states),
+    dropState = column.dropState,
+    done = column.done,
+    cards = column.cards and kanban.util.map(column.cards, function(c)
+      return c.id
+    end) or {},
+  }
+end
+
+---The whole board as plain data: `{ apiVersion, title, columns, cards }`, with
+---`cards` keyed by card id.
+---@param m kanban.Model
+---@return table
+function model.snapshot(m)
+  local cards = {}
+  for id, card in pairs(m.cards) do
+    cards[id] = model.cardSnapshot(card)
+  end
+  return {
+    apiVersion = kanban.apiVersion,
+    title = m.title,
+    columns = kanban.util.map(m.columns, model.columnSnapshot),
+    cards = cards,
+  }
+end
+
+---Adds badges from an outside source, given as `{ [cardId] = { badge, ... } }`.
+---Invalid badges and unknown cards are skipped.
+---@param m kanban.Model
+---@param byCard table
+---@return integer added
+function model.addBadges(m, byCard)
+  local added = 0
+  if type(byCard) ~= "table" then
+    return added
+  end
+  for _, id in ipairs(kanban.util.sortedKeys(byCard)) do
+    local card = m.cards[id]
+    if card and type(byCard[id]) == "table" then
+      for _, b in ipairs(byCard[id]) do
+        if validBadge(b) then
+          card.badges[#card.badges + 1] = b
+          added = added + 1
+        end
+      end
+    end
+  end
+  return added
+end

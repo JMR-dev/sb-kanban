@@ -108,6 +108,14 @@ Other Space Lua code (at the default priority) can add card badges and move rule
       end,
     }
 
+### From a plug or a service
+Code that isn't Space Lua (such as a TypeScript plug) extends boards through SilverBullet [[API/service|services]]. Discovery data is `{ apiVersion }`, so a provider can decline versions it doesn't know.
+
+* `kanban:decorator` is invoked once per board with a plain snapshot `{ apiVersion, title, columns, cards }` (`cards` keyed by card id). It returns `{ [cardId] = { badge, ... } }`.
+* `kanban:moveGuard` is invoked once per move with `{ card, from, to, targetState }`. It returns `{ allowed = false, reason = "..." }` to refuse.
+
+From Space Lua that is `service.define { selector = "kanban:decorator", match = { priority = 1 }, run = function(snapshot) ... end }`. A plug answers the `discover:kanban:decorator` event with `{ id = "<its id>", priority = 1 }` and handles `service:<its id>`.
+
 A badge is `{ kind, text, title?, tone?, refs? }` (`tone` is `info`, `warn`, `error` or `ok`; `refs` are task refs the badge opens). A card has `id`, `title`, `page`, `done`, `task` (`state`, `name`, `tags`, `anchor`, `blockedBy`) and `deps` (`blockers`, `blocks`, `openBlockers`, `missing`, `inCycle`). Decorators run by `priority` (highest first); a failing one is reported on the board instead of breaking it. `kanban.apiVersion` changes only when this API breaks.
 
 # Implementation
@@ -1004,6 +1012,94 @@ function model.column(m, id)
   end
   return nil
 end
+
+local function refs(list)
+  return kanban.util.map(list, function(t)
+    return t.ref
+  end)
+end
+
+---A card as plain data (no functions, no shared tables), for extensions that
+---run outside this library, such as a TypeScript plug behind a SilverBullet
+---service.
+---@param card kanban.Card
+---@return table
+function model.cardSnapshot(card)
+  local t, d = card.task, card.deps
+  return {
+    id = card.id,
+    title = card.title,
+    page = card.page,
+    done = card.done,
+    column = card.column,
+    state = t.state,
+    anchor = t.anchor,
+    tags = kanban.util.shallowCopy(t.tags),
+    blockedBy = kanban.util.shallowCopy(t.blockedBy),
+    blockers = refs(d.blockers),
+    blocks = refs(d.blocks),
+    openBlockers = d.openBlockers,
+    missing = kanban.util.shallowCopy(d.missing),
+    inCycle = d.inCycle,
+  }
+end
+
+---A column as plain data, with its cards as a list of card ids.
+---@param column table
+---@return table
+function model.columnSnapshot(column)
+  return {
+    id = column.id,
+    title = column.title,
+    states = kanban.util.shallowCopy(column.states),
+    dropState = column.dropState,
+    done = column.done,
+    cards = column.cards and kanban.util.map(column.cards, function(c)
+      return c.id
+    end) or {},
+  }
+end
+
+---The whole board as plain data: `{ apiVersion, title, columns, cards }`, with
+---`cards` keyed by card id.
+---@param m kanban.Model
+---@return table
+function model.snapshot(m)
+  local cards = {}
+  for id, card in pairs(m.cards) do
+    cards[id] = model.cardSnapshot(card)
+  end
+  return {
+    apiVersion = kanban.apiVersion,
+    title = m.title,
+    columns = kanban.util.map(m.columns, model.columnSnapshot),
+    cards = cards,
+  }
+end
+
+---Adds badges from an outside source, given as `{ [cardId] = { badge, ... } }`.
+---Invalid badges and unknown cards are skipped.
+---@param m kanban.Model
+---@param byCard table
+---@return integer added
+function model.addBadges(m, byCard)
+  local added = 0
+  if type(byCard) ~= "table" then
+    return added
+  end
+  for _, id in ipairs(kanban.util.sortedKeys(byCard)) do
+    local card = m.cards[id]
+    if card and type(byCard[id]) == "table" then
+      for _, b in ipairs(byCard[id]) do
+        if validBadge(b) then
+          card.badges[#card.badges + 1] = b
+          added = added + 1
+        end
+      end
+    end
+  end
+  return added
+end
 ```
 
 ### src/core/moves.lua
@@ -1488,6 +1584,10 @@ function actions.move(spec, cardId, columnId)
   if plan.noop then
     return false
   end
+  if plan.ok then
+    plan.reasons = kanban.sb.bridge.checkMove(plan.move)
+    plan.ok = #plan.reasons == 0
+  end
   if not plan.ok then
     notifyError(table.concat(plan.reasons, " "))
     return false
@@ -1687,6 +1787,94 @@ function kanban.sb.renderBlock(body)
 end
 ```
 
+### src/sb/bridge.lua
+```space-lua
+-- SPDX-License-Identifier: AGPL-3.0-or-later
+-- priority: 50
+
+-- Extensions provided as SilverBullet services, which is how a TypeScript
+-- plug (or any other code) can extend boards without being Space Lua:
+--
+-- * "kanban:decorator": invoked once per board with kanban.model.snapshot(m);
+--   returns `{ [cardId] = { badge, ... } }`.
+-- * "kanban:moveGuard": invoked once per move with
+--   `{ card = cardSnapshot, from = columnSnapshot, to = columnSnapshot,
+--   targetState }`; returns nil/true to allow, or `{ allowed = false,
+--   reason = "..." }` to refuse.
+--
+-- Discovery data is `{ apiVersion = kanban.apiVersion }`, so a provider can
+-- decline versions it does not know. A plug provides a service by answering
+-- the `discover:<selector>` event with `{ id = "<its id>", priority = n }` and
+-- handling `service:<its id>`; Space Lua uses service.define.
+
+kanban = kanban or {}
+kanban.sb = kanban.sb or {}
+kanban.sb.bridge = kanban.sb.bridge or {}
+local bridge = kanban.sb.bridge
+
+bridge.decoratorSelector = "kanban:decorator"
+bridge.guardSelector = "kanban:moveGuard"
+
+local function discover(selector)
+  local ok, matches = pcall(service.discover, selector, { apiVersion = kanban.apiVersion })
+  if not ok or type(matches) ~= "table" then
+    return {}
+  end
+  return matches
+end
+
+local function label(match)
+  return tostring(match.name or match.id or "?")
+end
+
+---Adds badges from decorator services to a model.
+---@param m kanban.Model
+function bridge.decorate(m)
+  local matches = discover(bridge.decoratorSelector)
+  if #matches == 0 then
+    return
+  end
+  local snapshot = kanban.model.snapshot(m)
+  for _, match in ipairs(matches) do
+    local ok, result = pcall(service.invoke, match, snapshot)
+    if ok then
+      kanban.model.addBadges(m, result)
+    else
+      m.errors[#m.errors + 1] = "decorator service "
+        .. label(match)
+        .. " failed: "
+        .. tostring(result)
+    end
+  end
+end
+
+---Asks move-guard services about a planned move.
+---@param move kanban.Move
+---@return string[] reasons to refuse (empty when every service allows it)
+function bridge.checkMove(move)
+  local reasons = {}
+  local matches = discover(bridge.guardSelector)
+  if #matches == 0 then
+    return reasons
+  end
+  local data = {
+    card = kanban.model.cardSnapshot(move.card),
+    from = move.from and kanban.model.columnSnapshot(move.from) or nil,
+    to = kanban.model.columnSnapshot(move.to),
+    targetState = move.targetState,
+  }
+  for _, match in ipairs(matches) do
+    local ok, result = pcall(service.invoke, match, data)
+    if not ok then
+      reasons[#reasons + 1] = "Move check " .. label(match) .. " failed: " .. tostring(result)
+    elseif type(result) == "table" and result.allowed == false then
+      reasons[#reasons + 1] = result.reason or ("Refused by " .. label(match) .. ".")
+    end
+  end
+  return reasons
+end
+```
+
 ### src/sb/data.lua
 ```space-lua
 -- SPDX-License-Identifier: AGPL-3.0-or-later
@@ -1733,7 +1921,10 @@ function data.model(spec)
     s = kanban.util.shallowCopy(spec)
     s.tasks = kanban.util.map(spec.tasks, kanban.tasks.fromIndex)
   end
-  return kanban.model.build(s, data.allTasks(), data.stateDefs(), kanban.registry.list "decorators")
+  local m =
+    kanban.model.build(s, data.allTasks(), data.stateDefs(), kanban.registry.list "decorators")
+  kanban.sb.bridge.decorate(m)
+  return m
 end
 ```
 

@@ -42,5 +42,8 @@ function data.model(spec)
     s = kanban.util.shallowCopy(spec)
     s.tasks = kanban.util.map(spec.tasks, kanban.tasks.fromIndex)
   end
-  return kanban.model.build(s, data.allTasks(), data.stateDefs(), kanban.registry.list "decorators")
+  local m =
+    kanban.model.build(s, data.allTasks(), data.stateDefs(), kanban.registry.list "decorators")
+  kanban.sb.bridge.decorate(m)
+  return m
 end
