@@ -41,12 +41,14 @@ fmt-check:
 	$(STYLUA) --check $(FMT_DIRS)
 
 ## Syntax (luac 5.5.1), luacheck's allowlist std, the Space Lua dialect rules,
-## and the type stubs matching the allowlist.
+## the type stubs matching the allowlist, and the page linking only to pages
+## every space has.
 lint:
 	$(LUAC) -p $(ALL_LUA)
 	$(LUACHECK) -q .
 	$(LUA) tools/check_dialect.lua $(SB_LUA)
 	$(LUA) tools/check_api.lua
+	$(LUA) tools/check_page_links.lua page/Kanban.template.md
 
 typecheck:
 	$(LUALS) --check=. --checklevel=Warning --configpath=.luarc.json \
