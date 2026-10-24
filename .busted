@@ -1,0 +1,11 @@
+-- busted 2.3.0 on Lua 5.5.1. The helper loads src/ the way SilverBullet does
+-- (one chunk per block, in run order) before any spec runs.
+return {
+  _all = {
+    helper = "spec/helpers/load_src.lua",
+  },
+  default = {
+    ROOT = { "spec" },
+    pattern = "_spec",
+  },
+}

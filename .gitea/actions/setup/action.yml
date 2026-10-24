@@ -1,0 +1,44 @@
+name: Toolchain
+description: |
+  Installs the pinned, checksum-verified toolchain through scripts/bootstrap.sh
+  (versions and hashes in tools/versions.env, the same as local development)
+  and puts .tools/bin and lua_modules/bin on PATH.
+
+inputs:
+  tools:
+    description: Space-separated subset of "lua luarocks rocks luacheck stylua luals silverbullet"
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Install tools
+      shell: bash
+      env:
+        TOOLS: ${{ inputs.tools }}
+      run: |
+        set -euo pipefail
+
+        # Build and download prerequisites the runner image may lack: a C
+        # toolchain for Lua and the busted/luacheck C modules, unzip for rocks
+        # and release archives, make for the Makefile.
+        missing=""
+        command -v make >/dev/null || missing+=" make"
+        command -v curl >/dev/null || missing+=" curl ca-certificates"
+        command -v unzip >/dev/null || missing+=" unzip"
+        if [[ " $TOOLS " == *" lua "* || " $TOOLS " == *" rocks "* || " $TOOLS " == *" luacheck "* ]]; then
+          command -v gcc >/dev/null || missing+=" gcc libc6-dev"
+        fi
+        if [[ -n "$missing" ]]; then
+          sudo=""
+          [[ "$(id -u)" == 0 ]] || sudo=sudo
+          export DEBIAN_FRONTEND=noninteractive
+          $sudo apt-get update -qq
+          # shellcheck disable=SC2086
+          $sudo apt-get install -y -qq --no-install-recommends $missing >/dev/null
+        fi
+
+        # shellcheck disable=SC2086
+        scripts/bootstrap.sh $TOOLS
+        echo "${GITHUB_WORKSPACE}/.tools/bin" >>"$GITHUB_PATH"
+        echo "${GITHUB_WORKSPACE}/lua_modules/bin" >>"$GITHUB_PATH"
