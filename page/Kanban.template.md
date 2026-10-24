@@ -108,6 +108,14 @@ Other Space Lua code (at the default priority) can add card badges and move rule
       end,
     }
 
+### From a plug or a service
+Code that isn't Space Lua (such as a TypeScript plug) extends boards through SilverBullet [[API/service|services]]. Discovery data is `{ apiVersion }`, so a provider can decline versions it doesn't know.
+
+* `kanban:decorator` is invoked once per board with a plain snapshot `{ apiVersion, title, columns, cards }` (`cards` keyed by card id). It returns `{ [cardId] = { badge, ... } }`.
+* `kanban:moveGuard` is invoked once per move with `{ card, from, to, targetState }`. It returns `{ allowed = false, reason = "..." }` to refuse.
+
+From Space Lua that is `service.define { selector = "kanban:decorator", match = { priority = 1 }, run = function(snapshot) ... end }`. A plug answers the `discover:kanban:decorator` event with `{ id = "<its id>", priority = 1 }` and handles `service:<its id>`.
+
 A badge is `{ kind, text, title?, tone?, refs? }` (`tone` is `info`, `warn`, `error` or `ok`; `refs` are task refs the badge opens). A card has `id`, `title`, `page`, `done`, `task` (`state`, `name`, `tags`, `anchor`, `blockedBy`) and `deps` (`blockers`, `blocks`, `openBlockers`, `missing`, `inCycle`). Decorators run by `priority` (highest first); a failing one is reported on the board instead of breaking it. `kanban.apiVersion` changes only when this API breaks.
 
 # Implementation

@@ -177,3 +177,25 @@ test.describe("editing blockers from the board", () => {
     );
   });
 });
+
+test.describe("extensions", () => {
+  test("Lua decorators and service decorators add badges", async ({ page }) => {
+    await openBoard(page, "Boards/Ext");
+    const decorated = card(page, "Decorate me");
+    await expect(decorated.locator('[data-badge="fromLua"]')).toHaveText("From Lua", {
+      timeout: 45_000,
+    });
+    await expect(decorated.locator('[data-badge="fromService"]')).toHaveText("From a service");
+  });
+
+  test("a move-guard service can refuse a move", async ({ page }) => {
+    await openBoard(page, "Boards/Ext");
+    await expect(card(page, "Decorate me").locator('[data-badge="fromService"]')).toHaveCount(1, {
+      timeout: 45_000,
+    });
+    const before = await readFile("Ext/Tasks.md");
+    await card(page, "Guarded task").locator("select.sbk-move").selectOption({ label: "DOING" });
+    await expect(errorNotification(page)).toContainText("Guarded by a service.");
+    expect(await readFile("Ext/Tasks.md")).toBe(before);
+  });
+});

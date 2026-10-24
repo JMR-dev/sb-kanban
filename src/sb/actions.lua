@@ -35,6 +35,10 @@ function actions.move(spec, cardId, columnId)
   if plan.noop then
     return false
   end
+  if plan.ok then
+    plan.reasons = kanban.sb.bridge.checkMove(plan.move)
+    plan.ok = #plan.reasons == 0
+  end
   if not plan.ok then
     notifyError(table.concat(plan.reasons, " "))
     return false
