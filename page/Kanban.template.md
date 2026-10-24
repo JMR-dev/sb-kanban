@@ -15,6 +15,18 @@ in its page. Tasks can block other tasks across pages.
 > This page is generated from the [sb-kanban repository](https://gitea.jasonmross.dev/JMR-dev/sb-kanban) (version {{version}}). Edit the sources there, not here: updating the library replaces this page. Requires SilverBullet 2.12.
 
 # Boards
+Installing this library adds no board by itself: a board appears on any page
+where you put a `kanban` block. For example, on a new page:
+
+    # My board
+
+    * [ ] A task
+    * [x] A finished task
+
+    ```kanban
+    page: My board
+    ```
+
 Put a `kanban` block on any page:
 
     ```kanban
@@ -62,7 +74,7 @@ To choose columns yourself, list states, or tables:
 A column with several `states` shows all of them; dropping a card on it writes its `dropState` (default: the first state). Tasks in states that no column takes are counted under the board.
 
 # Blockers
-A task names the tasks it waits for in a `blockedBy` attribute, by [[Markdown/Anchor|anchor]]:
+A task names the tasks it waits for in a `blockedBy` attribute, by [anchor](https://silverbullet.md/Markdown/Anchor):
 
     * [DOING] Ship the API $api-v2
     * [TODO] Build the web client [blockedBy: "[[$api-v2]]"]
@@ -77,7 +89,7 @@ Blockers can be on any page, so they work across boards. Cards show:
 Use **+ Blocker** on a card to pick the task it waits for; a task without an anchor gets one (`$ship-the-api-3f2a`). **− Blocker** removes one. With `rules.blockDone: true` a blocked card can't be moved to Done.
 
 # Lua API
-The same options work from [[Space Lua]], which also lets you pick the tasks with a query:
+The same options work from [Space Lua](https://silverbullet.md/Space%20Lua), which also lets you pick the tasks with a query:
 
     ${kanban.board {
       title = "Due this week",
@@ -109,7 +121,7 @@ Other Space Lua code (at the default priority) can add card badges and move rule
     }
 
 ### From a plug or a service
-Code that isn't Space Lua (such as a TypeScript plug) extends boards through SilverBullet [[API/service|services]]. Discovery data is `{ apiVersion }`, so a provider can decline versions it doesn't know.
+Code that isn't Space Lua (such as a TypeScript plug) extends boards through SilverBullet [services](https://silverbullet.md/API/service). Discovery data is `{ apiVersion }`, so a provider can decline versions it doesn't know.
 
 * `kanban:decorator` is invoked once per board with a plain snapshot `{ apiVersion, title, columns, cards }` (`cards` keyed by card id). It returns `{ [cardId] = { badge, ... } }`.
 * `kanban:moveGuard` is invoked once per move with `{ card, from, to, targetState }`. It returns `{ allowed = false, reason = "..." }` to refuse.
