@@ -48,6 +48,18 @@ stds.spacelua = {
   globals = { "kanban" },
 }
 
+-- src/core/ and its specs: the standard library only, with no SilverBullet
+-- APIs and not even Space Lua's string extensions. The Lua 5.5.1 test run
+-- then exercises exactly the code SilverBullet runs, with nothing stubbed.
+local coreGlobals = {}
+for _, name in ipairs(api.stdlib.globals) do
+  coreGlobals[name] = {}
+end
+for name, fields in pairs(api.stdlib.tables) do
+  coreGlobals[name] = fieldTable(fields)
+end
+stds.spacecore = { read_globals = coreGlobals, globals = { "kanban" } }
+
 -- Exactly the busted subset that sbtest/shim.lua implements, so a spec that
 -- uses anything else fails lint before it fails inside SilverBullet.
 stds.bustedSubset = {
@@ -87,7 +99,8 @@ end
 std = "spacelua"
 max_line_length = 100
 
-files["spec/core"] = { std = "spacelua+bustedSubset" }
+files["src/core"] = { std = "spacecore" }
+files["spec/core"] = { std = "spacecore+bustedSubset" }
 files["sbtest"] = { std = "spacelua+bustedSubset+sbtest" }
 
 -- These only ever run on Lua 5.5.1, never inside SilverBullet, so the full

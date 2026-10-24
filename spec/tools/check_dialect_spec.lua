@@ -69,6 +69,10 @@ kanban = kanban or {}
     assert.is_true(hasFinding("local m = { __metatable = false }", "`__metatable`"))
   end)
 
+  it("rejects `repeat ... until`", function()
+    assert.is_true(hasFinding("repeat local t = f() until t", "`repeat ... until`"))
+  end)
+
   it("rejects `_G`", function()
     assert.is_true(hasFinding("for k in pairs(_G) do end", "`_G`"))
     assert.is_true(hasFinding("local s = _G.string", "`_G`"))

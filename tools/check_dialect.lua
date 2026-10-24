@@ -185,6 +185,12 @@ function M.check(src)
               .. " assign the result to a local first"
           )
         end
+      elseif tok.value == "repeat" then
+        report(
+          tok,
+          "`repeat ... until`: Space Lua does not scope the body's locals into the"
+            .. " `until` condition; use a `while` loop with `break`"
+        )
       elseif tok.value == "_G" then
         report(
           tok,
