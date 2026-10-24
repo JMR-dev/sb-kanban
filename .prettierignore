@@ -1,0 +1,3 @@
+# Generated: rebuilt from page/ and src/ by `make build`, checked by
+# `make build-check`. Formatting it by hand makes CI fail.
+dist/
