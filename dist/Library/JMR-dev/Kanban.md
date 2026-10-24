@@ -4,7 +4,7 @@ tags: meta/library
 description: Kanban boards for SilverBullet tasks, with drag-and-drop and cross-page blockers.
 author: JMR-dev
 license: AGPL-3.0-or-later
-website: https://gitea.jasonmross.dev/JMR-dev/sb-kanban
+website: https://github.com/JMR-dev/sb-kanban
 version: "0.1.0"
 ---
 Kanban boards for your tasks. A board is a view: cards are your ordinary
