@@ -107,7 +107,7 @@ files["sbtest"] = { std = "spacelua+bustedSubset+sbtest" }
 -- standard library is fine there.
 files["spec/sb"] = { std = "lua55+spacelua+bustedSubset", globals = { "sbfake" } }
 files["spec/helpers"] = { std = "lua55+bustedSubset", globals = stubbed }
-files["spec/tools"] = { std = "lua55+bustedSubset" }
+files["spec/tools"] = { std = "lua55+bustedSubset", read_globals = { "sbfake" } }
 files["tools"] = { std = "lua55" }
 files["tools/fixtures"] = { std = "spacelua" }
 

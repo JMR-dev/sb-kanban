@@ -61,7 +61,7 @@ local function validBadge(b)
   return type(b) == "table" and type(b.kind) == "string" and type(b.text) == "string"
 end
 
----@param spec kanban.Spec
+---@param spec kanban.Spec `spec.tasks`, when set, must already be kanban.Task values
 ---@param allTasks kanban.Task[] every task in the space
 ---@param stateDefs table|nil the `taskStates` config map
 ---@param decorators kanban.Decorator[]|nil
@@ -87,7 +87,10 @@ function model.build(spec, allTasks, stateDefs, decorators)
     m.columns[#m.columns + 1] = c
   end
 
-  for _, task in ipairs(kanban.tasks.select(allTasks, spec)) do
+  -- The Lua API may hand over its own task list (`tasks`); dependencies are
+  -- still resolved against every task.
+  local selected = spec.tasks or kanban.tasks.select(allTasks, spec)
+  for _, task in ipairs(selected) do
     local done = isDone(task.state)
     if spec.includeDone or not done then
       local card = {
