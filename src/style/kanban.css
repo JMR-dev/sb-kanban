@@ -1,0 +1,160 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
+/* Board styles, using SilverBullet's theme variables so boards follow the
+   light and dark themes. Every class starts with sbk- to stay out of the way. */
+
+.sbk-board {
+  margin: 0.5em 0;
+  font-size: 0.95em;
+}
+
+.sbk-title {
+  font-weight: 600;
+  margin-bottom: 0.5em;
+}
+
+.sbk-columns {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+}
+
+.sbk-column {
+  /* Share the editor's width; scroll sideways only when columns would get
+     narrower than 9rem. */
+  flex: 1 1 0;
+  min-width: 9rem;
+  max-width: 24rem;
+  min-height: 5rem;
+  padding: 0.5rem;
+  border: 1px solid var(--button-border-color, rgba(127, 127, 127, 0.35));
+  border-radius: 6px;
+  background: var(--editor-widget-background-color, rgba(127, 127, 127, 0.08));
+}
+
+.sbk-column-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.sbk-count,
+.sbk-empty {
+  color: var(--meta-color, #888);
+  font-weight: normal;
+}
+
+.sbk-empty {
+  font-size: 0.85em;
+  padding: 0.25rem 0;
+}
+
+.sbk-card {
+  margin-bottom: 0.45rem;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--button-border-color, rgba(127, 127, 127, 0.35));
+  border-radius: 5px;
+  background: var(--editor-background-color, Canvas);
+  cursor: grab;
+}
+
+.sbk-card.sbk-done .sbk-card-title {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+.sbk-card-title {
+  overflow-wrap: anywhere;
+}
+
+.sbk-card-page {
+  all: unset;
+  cursor: pointer;
+  font-size: 0.8em;
+  color: var(--link-color, #2563eb);
+}
+
+.sbk-card-page:hover,
+.sbk-card-page:focus-visible {
+  text-decoration: underline;
+}
+
+.sbk-badges,
+.sbk-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.35rem;
+}
+
+.sbk-badge {
+  font: inherit;
+  font-size: 0.75em;
+  padding: 0 0.5em;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  background: none;
+}
+
+button.sbk-badge {
+  cursor: pointer;
+}
+
+.sbk-tone-info {
+  color: var(--alert-info-color, #1d4ed8);
+  background: var(--alert-info-background-color, transparent);
+  border-color: var(--alert-info-border-color, currentColor);
+}
+
+.sbk-tone-warn {
+  color: var(--alert-warning-color, #b45309);
+  background: var(--alert-warning-background-color, transparent);
+  border-color: var(--alert-warning-border-color, currentColor);
+}
+
+.sbk-tone-error {
+  color: var(--alert-error-color, #b91c1c);
+  background: var(--alert-error-background-color, transparent);
+  border-color: var(--alert-error-border-color, currentColor);
+}
+
+.sbk-tone-ok {
+  color: var(--meta-color, #15803d);
+}
+
+.sbk-move,
+.sbk-btn {
+  font: inherit;
+  font-size: 0.75em;
+  padding: 0.05em 0.4em;
+  border: 1px solid var(--button-border-color, rgba(127, 127, 127, 0.5));
+  border-radius: 4px;
+  color: var(--button-color, inherit);
+  background: var(--button-background-color, transparent);
+}
+
+.sbk-btn {
+  cursor: pointer;
+}
+
+.sbk-btn:hover {
+  background: var(--button-hover-background-color, rgba(127, 127, 127, 0.15));
+}
+
+.sbk-problems {
+  margin-bottom: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--alert-error-border-color, #b91c1c);
+  border-radius: 5px;
+  color: var(--alert-error-color, #b91c1c);
+  background: var(--alert-error-background-color, transparent);
+}
+
+.sbk-unplaced {
+  margin-top: 0.4rem;
+  font-size: 0.85em;
+  color: var(--meta-color, #888);
+}

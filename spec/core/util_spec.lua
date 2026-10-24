@@ -39,6 +39,15 @@ describe("kanban.util", function()
     assert.is_false(util.contains({ "x" }, "z"))
   end)
 
+  it("copies tables shallowly", function()
+    local inner = { 1 }
+    local original = { a = 1, inner = inner }
+    local copy = util.shallowCopy(original)
+    assert.are.same(original, copy)
+    assert.is_false(copy == original)
+    assert.are.equal(inner, copy.inner)
+  end)
+
   it("sorts keys independently of pairs order", function()
     assert.are.same({ "a", "b", "c" }, util.sortedKeys { c = 1, a = 2, b = 3 })
   end)

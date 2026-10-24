@@ -83,6 +83,18 @@ function util.filter(list, fn)
   return out
 end
 
+---A shallow copy of a table.
+---@generic T: table
+---@param t T
+---@return T
+function util.shallowCopy(t)
+  local out = {}
+  for k, v in pairs(t) do
+    out[k] = v
+  end
+  return out
+end
+
 ---The keys of `t`, sorted, for iteration that does not depend on `pairs`
 ---order (which differs between Space Lua and reference Lua).
 ---@param t table

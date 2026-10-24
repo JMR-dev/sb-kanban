@@ -57,6 +57,14 @@ describe("kanban.model.build", function()
     assert.are.equal(1, card.deps.openBlockers)
   end)
 
+  it("uses a given task list instead of the filters", function()
+    local s = spec { page = "Nowhere" }
+    s.tasks = { all[2] }
+    local m = kanban.model.build(s, all, stateDefs, {})
+    assert.are.same({ "Build web" }, titles(m.unplaced))
+    assert.are.equal("api", m.cards["Web@5"].deps.blockers[1].ref)
+  end)
+
   it("runs decorators by priority and keeps only valid badges", function()
     local order = {}
     local decorators = {
