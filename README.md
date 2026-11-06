@@ -56,4 +56,4 @@ taken from it.
 
 ## License
 
-[AGPL-3.0-or-later](LICENSE).
+[Apache-2.0](LICENSE).

@@ -1,4 +1,4 @@
--- SPDX-License-Identifier: AGPL-3.0-or-later
+-- SPDX-License-Identifier: Apache-2.0
 --
 -- The `kanban` fenced block is registered with SilverBullet and renders.
 -- (2.12's codeWidget.render syscall only knows plug widgets, so the spec

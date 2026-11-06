@@ -1,4 +1,4 @@
--- SPDX-License-Identifier: AGPL-3.0-or-later
+-- SPDX-License-Identifier: Apache-2.0
 --
 -- Every name in tools/sb_api.lua (prepended as `sbApi`) must exist on the
 -- pinned SilverBullet. luacheck only lets the library use what that list

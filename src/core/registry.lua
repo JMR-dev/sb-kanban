@@ -1,4 +1,4 @@
--- SPDX-License-Identifier: AGPL-3.0-or-later
+-- SPDX-License-Identifier: Apache-2.0
 -- priority: 50
 
 -- The extension points: card decorators (badges) and move guards. Any Space

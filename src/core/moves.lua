@@ -1,4 +1,4 @@
--- SPDX-License-Identifier: AGPL-3.0-or-later
+-- SPDX-License-Identifier: Apache-2.0
 -- priority: 50
 
 -- Planning a card move: which state to write, and whether move guards allow

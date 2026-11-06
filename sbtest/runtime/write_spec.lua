@@ -1,4 +1,4 @@
--- SPDX-License-Identifier: AGPL-3.0-or-later
+-- SPDX-License-Identifier: Apache-2.0
 --
 -- kanban.sb.write against real pages (sbtest/space/Write/*). The client
 -- re-indexes a page right after it writes it, and a task is briefly missing

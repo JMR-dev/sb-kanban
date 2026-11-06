@@ -1,4 +1,4 @@
--- SPDX-License-Identifier: AGPL-3.0-or-later
+-- SPDX-License-Identifier: Apache-2.0
 --
 -- The subset of busted that specs may use (stds.bustedSubset in .luacheckrc),
 -- reimplemented in portable Lua so the same specs also run inside a real
