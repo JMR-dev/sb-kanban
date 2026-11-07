@@ -45,10 +45,13 @@ function kanban.taskStates(list)
   if #valid == 0 then
     config.set("taskStates", kanban.defaults.stateMap(kanban.defaults.taskStates))
     config.set({ "kanban", "customStates" }, false)
-    return
+  else
+    config.set("taskStates", kanban.defaults.stateMap(valid))
+    config.set({ "kanban", "customStates" }, true)
   end
-  config.set("taskStates", kanban.defaults.stateMap(valid))
-  config.set({ "kanban", "customStates" }, true)
+  -- Only now, with both settings in place: while the scripts load, this makes
+  -- the removed-state check due on the next clock tick.
+  kanban.sb.migrate.listApplied()
 end
 
 ---Writes the current task states into CONFIG as an editable

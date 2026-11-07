@@ -49,18 +49,17 @@ command.define {
   end,
 }
 
--- Move tasks in removed states back to [ ] once the scripts have loaded:
--- this block runs on every load (startup and System: Reload), before CONFIG,
--- and the check runs on the next clock tick, after CONFIG. (editor:init is not
--- enough: System: Reload doesn't fire it, and on a client's first start the
--- scripts only load after it.)
-kanban.sb.migrate.pending = true
+-- Move tasks in removed states back to [ ] on every load (startup and System:
+-- Reload), once CONFIG has applied its task states: this block marks the load
+-- as waiting, kanban.taskStates makes the check due, and the next clock tick
+-- runs it (src/sb/migrate.lua). Loading the scripts can take longer than a
+-- clock tick, so "the first tick after this block" can come before CONFIG.
+-- (editor:init is not enough either: System: Reload doesn't fire it, and on a
+-- client's first start the scripts only load after it.)
+kanban.sb.migrate.loading()
 event.listen {
   name = "cron:secondPassed",
   run = function()
-    if kanban.sb.migrate.pending then
-      kanban.sb.migrate.pending = false
-      kanban.sb.migrate.run()
-    end
+    kanban.sb.migrate.tick()
   end,
 }

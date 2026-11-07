@@ -2,9 +2,9 @@
 -- priority: 50
 
 -- When CONFIG sets the complete list of task states (kanban.taskStates), a
--- task in any other state goes back to `[ ]`. This runs once after the
--- scripts load, at startup and after System: Reload (scheduled in
--- src/register.lua), and from the "Kanban: Move tasks in removed states to
+-- task in any other state goes back to `[ ]`. This runs once per load of the
+-- scripts (startup and System: Reload), on the first clock tick after CONFIG
+-- applied its list, and from the "Kanban: Move tasks in removed states to
 -- [ ]" command.
 --
 -- Tasks are rewritten bottom-up within each page, so a rewrite never shifts
@@ -18,6 +18,35 @@ kanban.sb.migrate = kanban.sb.migrate or {}
 local migrate = kanban.sb.migrate
 
 local builtin = { [" "] = true, x = true, X = true }
+
+-- The startup check, in three steps per load of the scripts:
+--   1. migrate.loading()      src/register.lua, on every load: "awaiting"
+--   2. migrate.listApplied()  kanban.taskStates, once CONFIG set its list: "due"
+--   3. migrate.tick()         every clock tick: runs the check once it is due
+-- Loading the scripts can take longer than a clock tick, and CONFIG loads
+-- after src/register.lua, so a tick can land before CONFIG has applied its
+-- list; that tick must not run (or use up) the check. A list applied outside
+-- a load, such as by a spec in a running client, schedules nothing.
+
+---Marks this load of the scripts as waiting for CONFIG's task states.
+function migrate.loading()
+  migrate.phase = "awaiting"
+end
+
+---CONFIG has applied its task states: during a load, the check is now due.
+function migrate.listApplied()
+  if migrate.phase == "awaiting" then
+    migrate.phase = "due"
+  end
+end
+
+---Runs the check on the first clock tick after it became due, once.
+function migrate.tick()
+  if migrate.phase == "due" then
+    migrate.phase = nil
+    migrate.run()
+  end
+end
 
 ---The tasks in states that the current list doesn't have, grouped by page and
 ---ordered bottom-up within each page.
