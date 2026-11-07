@@ -11,7 +11,7 @@ source = {
 }
 description = {
   summary = "Kanban boards for SilverBullet v2, as a Space Lua library",
-  license = "AGPL-3.0-or-later",
+  license = "Apache-2.0",
 }
 dependencies = {
   "lua >= 5.4",

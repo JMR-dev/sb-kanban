@@ -1,4 +1,4 @@
--- SPDX-License-Identifier: AGPL-3.0-or-later
+-- SPDX-License-Identifier: Apache-2.0
 -- priority: 50
 
 -- The only code that changes pages. SilverBullet 2.12 has no object API, so:

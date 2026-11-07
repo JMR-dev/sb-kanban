@@ -1,4 +1,4 @@
--- SPDX-License-Identifier: AGPL-3.0-or-later
+-- SPDX-License-Identifier: Apache-2.0
 -- priority: 50
 
 -- When CONFIG sets the complete list of task states (kanban.taskStates), a

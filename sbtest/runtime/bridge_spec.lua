@@ -1,4 +1,4 @@
--- SPDX-License-Identifier: AGPL-3.0-or-later
+-- SPDX-License-Identifier: Apache-2.0
 --
 -- Extensions provided as SilverBullet services (the seam a TypeScript plug
 -- would use), with real service.define/discover/invoke. Services cannot be

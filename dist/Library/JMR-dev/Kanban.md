@@ -3,7 +3,7 @@ name: Library/JMR-dev/Kanban
 tags: meta/library
 description: Kanban boards for SilverBullet tasks, with drag-and-drop and cross-page blockers.
 author: JMR-dev
-license: AGPL-3.0-or-later
+license: Apache-2.0
 website: https://github.com/JMR-dev/sb-kanban
 version: "0.1.0"
 ---
@@ -151,7 +151,7 @@ A badge is `{ kind, text, title?, tone?, refs? }` (`tone` is `info`, `warn`, `er
 # Implementation
 ### src/core/builtins.lua
 ```space-lua
--- SPDX-License-Identifier: AGPL-3.0-or-later
+-- SPDX-License-Identifier: Apache-2.0
 -- priority: 50
 
 -- The built-in decorator and move guard. They use the same extension points
@@ -269,7 +269,7 @@ builtins.blockDone = {
 
 ### src/core/columns.lua
 ```space-lua
--- SPDX-License-Identifier: AGPL-3.0-or-later
+-- SPDX-License-Identifier: Apache-2.0
 -- priority: 50
 
 -- A board's columns. By default they come from the task states: one column
@@ -428,7 +428,7 @@ end
 
 ### src/core/config.lua
 ```space-lua
--- SPDX-License-Identifier: AGPL-3.0-or-later
+-- SPDX-License-Identifier: Apache-2.0
 -- priority: 50
 
 -- Board options, from a `kanban` fenced block (parsed YAML) or a Lua table
@@ -605,7 +605,7 @@ end
 
 ### src/core/defaults.lua
 ```space-lua
--- SPDX-License-Identifier: AGPL-3.0-or-later
+-- SPDX-License-Identifier: Apache-2.0
 -- priority: 50
 
 -- The library's built-in defaults: the task states every space gets, and the
@@ -809,7 +809,7 @@ end
 
 ### src/core/deps.lua
 ```space-lua
--- SPDX-License-Identifier: AGPL-3.0-or-later
+-- SPDX-License-Identifier: Apache-2.0
 -- priority: 50
 
 -- Dependencies between tasks, across every page (and so across boards): a
@@ -925,7 +925,7 @@ end
 
 ### src/core/edit.lua
 ```space-lua
--- SPDX-License-Identifier: AGPL-3.0-or-later
+-- SPDX-License-Identifier: Apache-2.0
 -- priority: 50
 
 -- Pure edits of one task line (`* [STATE] name [key: value] $anchor`):
@@ -1082,7 +1082,7 @@ end
 
 ### src/core/ids.lua
 ```space-lua
--- SPDX-License-Identifier: AGPL-3.0-or-later
+-- SPDX-License-Identifier: Apache-2.0
 -- priority: 50
 
 -- Anchor names for tasks that get linked from the board: a readable slug of
@@ -1144,7 +1144,7 @@ end
 
 ### src/core/model.lua
 ```space-lua
--- SPDX-License-Identifier: AGPL-3.0-or-later
+-- SPDX-License-Identifier: Apache-2.0
 -- priority: 50
 
 -- The board model: columns holding cards, built from all tasks in the space
@@ -1405,7 +1405,7 @@ end
 
 ### src/core/moves.lua
 ```space-lua
--- SPDX-License-Identifier: AGPL-3.0-or-later
+-- SPDX-License-Identifier: Apache-2.0
 -- priority: 50
 
 -- Planning a card move: which state to write, and whether move guards allow
@@ -1472,7 +1472,7 @@ end
 
 ### src/core/registry.lua
 ```space-lua
--- SPDX-License-Identifier: AGPL-3.0-or-later
+-- SPDX-License-Identifier: Apache-2.0
 -- priority: 50
 
 -- The extension points: card decorators (badges) and move guards. Any Space
@@ -1524,7 +1524,7 @@ end
 
 ### src/core/states.lua
 ```space-lua
--- SPDX-License-Identifier: AGPL-3.0-or-later
+-- SPDX-License-Identifier: Apache-2.0
 -- priority: 50
 
 -- Task states: SilverBullet's built-in " " (to do) and "x"/"X" (done), plus
@@ -1598,7 +1598,7 @@ end
 
 ### src/core/tasks.lua
 ```space-lua
--- SPDX-License-Identifier: AGPL-3.0-or-later
+-- SPDX-License-Identifier: Apache-2.0
 -- priority: 50
 
 -- The library's view of a task: a plain table built from an index row, so
@@ -1722,7 +1722,7 @@ end
 
 ### src/core/util.lua
 ```space-lua
--- SPDX-License-Identifier: AGPL-3.0-or-later
+-- SPDX-License-Identifier: Apache-2.0
 -- priority: 50
 
 -- Small helpers for the pure core. Standard Lua only (no Space Lua string
@@ -1837,7 +1837,7 @@ end
 
 ### src/namespace.lua
 ```space-lua
--- SPDX-License-Identifier: AGPL-3.0-or-later
+-- SPDX-License-Identifier: Apache-2.0
 -- priority: 50
 
 -- The library's single global namespace. Never `kanban = {}`: a TypeScript
@@ -1854,7 +1854,7 @@ kanban.version = "0.1.0"
 
 ### src/sb/actions.lua
 ```space-lua
--- SPDX-License-Identifier: AGPL-3.0-or-later
+-- SPDX-License-Identifier: Apache-2.0
 -- priority: 50
 
 -- What the board's controls do. Each action rebuilds the model from the
@@ -2053,7 +2053,7 @@ end
 
 ### src/sb/board.lua
 ```space-lua
--- SPDX-License-Identifier: AGPL-3.0-or-later
+-- SPDX-License-Identifier: Apache-2.0
 -- priority: 50
 
 -- The public entry points: `kanban.board { ... }` for `${...}` expressions,
@@ -2110,7 +2110,7 @@ end
 
 ### src/sb/bridge.lua
 ```space-lua
--- SPDX-License-Identifier: AGPL-3.0-or-later
+-- SPDX-License-Identifier: Apache-2.0
 -- priority: 50
 
 -- Extensions provided as SilverBullet services, which is how a TypeScript
@@ -2198,7 +2198,7 @@ end
 
 ### src/sb/data.lua
 ```space-lua
--- SPDX-License-Identifier: AGPL-3.0-or-later
+-- SPDX-License-Identifier: Apache-2.0
 -- priority: 50
 
 -- Reading from SilverBullet: tasks, task-state definitions and anchors, turned
@@ -2251,7 +2251,7 @@ end
 
 ### src/sb/migrate.lua
 ```space-lua
--- SPDX-License-Identifier: AGPL-3.0-or-later
+-- SPDX-License-Identifier: Apache-2.0
 -- priority: 50
 
 -- When CONFIG sets the complete list of task states (kanban.taskStates), a
@@ -2375,7 +2375,7 @@ end
 
 ### src/sb/render.lua
 ```space-lua
--- SPDX-License-Identifier: AGPL-3.0-or-later
+-- SPDX-License-Identifier: Apache-2.0
 -- priority: 50
 
 -- The board as DOM, built with SilverBullet's `dom` builder: columns that
@@ -2603,7 +2603,7 @@ end
 
 ### src/sb/states.lua
 ```space-lua
--- SPDX-License-Identifier: AGPL-3.0-or-later
+-- SPDX-License-Identifier: Apache-2.0
 -- priority: 50
 
 -- Task states: the library's defaults (applied when it loads), and
@@ -2697,7 +2697,7 @@ end
 
 ### src/sb/write.lua
 ```space-lua
--- SPDX-License-Identifier: AGPL-3.0-or-later
+-- SPDX-License-Identifier: Apache-2.0
 -- priority: 50
 
 -- The only code that changes pages. SilverBullet 2.12 has no object API, so:
@@ -2832,7 +2832,7 @@ end
 
 ### src/register.lua
 ```space-lua
--- SPDX-License-Identifier: AGPL-3.0-or-later
+-- SPDX-License-Identifier: Apache-2.0
 -- priority: 10
 
 -- Everything the library does when it loads, as opposed to defining things.
@@ -2901,7 +2901,7 @@ event.listen {
 
 ### src/style/kanban.css
 ```space-style
-/* SPDX-License-Identifier: AGPL-3.0-or-later */
+/* SPDX-License-Identifier: Apache-2.0 */
 /* Board styles, using SilverBullet's theme variables so boards follow the
    light and dark themes. Every class starts with sbk- to stay out of the way. */
 
