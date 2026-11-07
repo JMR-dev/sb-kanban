@@ -48,11 +48,74 @@ describe("library load order", function()
       assert.is_true(sbfake.slashCommands.kanban ~= nil)
       assert.is_true(sbfake.commands["Kanban: Customize task states"] ~= nil)
       assert.are.equal(1, #sbfake.listeners["cron:secondPassed"])
-      assert.is_true(env.kanban.sb.migrate.pending)
+      assert.are.equal("awaiting", env.kanban.sb.migrate.phase)
       -- The default task states are in place before CONFIG runs.
       assert.is_true(sbfake.config.taskStates.Backlog.todo)
     end)
   end
+
+  -- The removed-state check after a load (src/sb/migrate.lua): loading the
+  -- scripts can take longer than a clock tick, and CONFIG loads after
+  -- src/register.lua, so ticks can come before CONFIG's kanban.taskStates.
+  describe("removed-state check", function()
+    local env, runs
+
+    local function tick()
+      sbfake.listeners["cron:secondPassed"][1].run()
+    end
+
+    before_each(function()
+      env = loadInto(runOrders().forward)
+      runs = 0
+      env.kanban.sb.migrate.run = function()
+        runs = runs + 1
+        return 0, 0
+      end
+    end)
+
+    it("waits for CONFIG's list: ticks before it neither run nor use up the check", function()
+      tick()
+      tick()
+      assert.are.equal(0, runs)
+      env.kanban.taskStates { { name = "TODO" } }
+      assert.is_true(sbfake.config.kanban.customStates)
+      tick()
+      assert.are.equal(1, runs)
+    end)
+
+    it("runs once per load", function()
+      env.kanban.taskStates { { name = "TODO" } }
+      tick()
+      tick()
+      assert.are.equal(1, runs)
+    end)
+
+    it("also becomes due for an empty list (the check then finds nothing to do)", function()
+      env.kanban.taskStates {}
+      tick()
+      assert.are.equal(1, runs)
+    end)
+
+    it("schedules nothing for a list applied after the load's check", function()
+      env.kanban.taskStates { { name = "TODO" } }
+      tick()
+      env.kanban.taskStates { { name = "OK" } }
+      tick()
+      assert.are.equal(1, runs)
+      assert.is_nil(env.kanban.sb.migrate.phase)
+    end)
+
+    it("waits again on the next load (System: Reload)", function()
+      env.kanban.taskStates { { name = "TODO" } }
+      tick()
+      env.kanban.sb.migrate.loading()
+      tick()
+      assert.are.equal(1, runs)
+      env.kanban.taskStates { { name = "TODO" } }
+      tick()
+      assert.are.equal(2, runs)
+    end)
+  end)
 
   it("would have caught a load-time call between same-priority files", function()
     local a = { path = "a.lua", priority = 50, src = "x = x or {}; x.value = 1" }
