@@ -228,6 +228,8 @@ test.describe("defaults", () => {
 
   test("removing a state from CONFIG sends its tasks back to [ ]", async ({ page }) => {
     const config = await readFile("CONFIG.md");
+    // Put back afterwards too, so a repeated run starts unmigrated.
+    const tasks = await readFile("Migrate/Tasks.md");
     await writeFile(
       "CONFIG.md",
       config.replace('  { name = "Retired", order = 10, done = true },\n', ""),
@@ -241,6 +243,7 @@ test.describe("defaults", () => {
       expect(text).toContain("* [TODO] Still here");
     } finally {
       await writeFile("CONFIG.md", config);
+      await writeFile("Migrate/Tasks.md", tasks);
     }
   });
 });
