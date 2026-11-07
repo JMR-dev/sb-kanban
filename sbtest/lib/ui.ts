@@ -3,6 +3,22 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 import { eventually, readFile, sbUrl } from "./sb.ts";
 
+/** Counts the SilverBullet client's finished boots in `page`: its first load
+ * and every reload. The client logs a "[Boot] boot-start=..." summary once a
+ * boot is done. Call this before the first navigation; the function it
+ * returns waits until that many boots have finished. */
+export function countBoots(page: Page): (count: number) => Promise<void> {
+  let boots = 0;
+  page.on("console", (message) => {
+    if (message.text().includes("[Boot] boot-start=")) boots++;
+  });
+  return async (count) => {
+    await expect
+      .poll(() => boots, { message: `${count} finished client boot(s)`, timeout: 60_000 })
+      .toBeGreaterThanOrEqual(count);
+  };
+}
+
 /** Opens a page of the test space and waits until a board is drawn. */
 export async function openBoard(page: Page, path: string): Promise<void> {
   await page.goto(`${sbUrl()}/${path.split("/").map(encodeURIComponent).join("/")}`);
