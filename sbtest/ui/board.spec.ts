@@ -7,6 +7,7 @@ import { readFile, writeFile } from "../lib/sb.ts";
 import {
   card,
   column,
+  countBoots,
   errorNotification,
   fileWhere,
   openBoard,
@@ -208,9 +209,17 @@ test.describe("defaults", () => {
     // close the completion popup. The page is created beforehand because
     // typing into a page that doesn't exist yet can lose keystrokes.
     const fence = "```";
+    const bootsDone = countBoots(page);
     await openBoard(page, "Boards/Projects");
+    await bootsDone(1);
     await writeFile("Scratch/Slash.md", "# Slash board\n\n");
     await page.goto(`${process.env.SB_URL}/Scratch/Slash`);
+    // The reload boots the client again, and the page shows before that boot
+    // is done. In CI the boot finished (its "[Boot]" summary) while "/kan"
+    // was being typed, and the click on the completion option 230 ms later
+    // was lost: the popup stayed open. So type only once the boot is done,
+    // and the popup never opens during one.
+    await bootsDone(2);
     await expect(page.locator(".cm-content")).toContainText("Slash board", { timeout: 60_000 });
     await page.locator(".cm-line").last().click();
     await page.keyboard.press("End");
