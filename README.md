@@ -23,13 +23,22 @@ The library is one page, `dist/Library/JMR-dev/Kanban.md`; it belongs at
 - **Any space, from the browser:** create the page `Library/JMR-dev/Kanban`
   and paste the file's contents into it.
 
-To update, replace the page the same way. Usage is documented on the
-installed page.
+- **Any space, with Library: Install:** give it the page on the public
+  GitHub mirror:
 
-**Library: Install** (and **Library: Update**) need the page at a publicly
-readable `https://` or `github:` URI: SilverBullet 2.12 reads no `http://`
-URIs and cannot sign in. This repository's Gitea instance requires signing
-in to read files, so that route needs a public mirror first.
+  ```text
+  https://raw.githubusercontent.com/JMR-dev/sb-kanban/main/dist/Library/JMR-dev/Kanban.md
+  ```
+
+  SilverBullet 2.12 reads libraries only from publicly readable `https://`
+  or `github:` URIs (no `http://`, and it cannot sign in), so not from this
+  repository's Gitea instance, which requires signing in. The shorter
+  `github:JMR-dev/sb-kanban/dist/Library/JMR-dev/Kanban.md` doesn't work on
+  2.12 either: its `github:` reader only finds files at a repository's root.
+
+To update, replace the page the same way, or run **Library: Update All** if
+you installed it with **Library: Install**. Usage is documented on the
+installed page.
 
 ## Development
 
